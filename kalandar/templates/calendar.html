@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+
+{% block head %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
+<style>
+    #calendar {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Your Calendar</h2>
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- Event Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventTitle">Event Title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Start:</strong> <span id="eventStart"></span></p>
+                <p><strong>End:</strong> <span id="eventEnd"></span></p>
+                <p><strong>Description:</strong></p>
+                <p id="eventDescription"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="deleteEvent">Delete</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: '/get-events',
+            editable: false,
+            eventClick: function(info) {
+                var eventObj = info.event;
+                $('#eventTitle').text(eventObj.title);
+                $('#eventStart').text(new Date(eventObj.start).toLocaleString());
+                $('#eventEnd').text(new Date(eventObj.end).toLocaleString());
+                $('#eventDescription').text(eventObj.extendedProps.description || 'No description');
+                $('#deleteEvent').data('id', eventObj.id);
+                var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+                eventModal.show();
+            }
+        });
+        calendar.render();
+
+        // Delete event handler
+        $('#deleteEvent').on('click', function() {
+            const eventId = $(this).data('id');
+            fetch('/delete-event', {
+                method: 'POST',
+                body: JSON.stringify({ eventId: eventId }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then((_res) => {
+                calendar.refetchEvents();
+                bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,8 @@
+Flask==2.3.3
+Jinja2==3.1.2
+Werkzeug==2.3.7
+SQLAlchemy==2.0.20
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.1.1
+Email-validator==2.0.0.post2
+Python-dotenv==1.0.0
