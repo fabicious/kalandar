@@ -23,22 +23,22 @@
                     
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label for="year" class="form-label">Year</label>
-                            <input type="number" class="form-control" id="year" name="year" value="{{ current_year }}" required>
+                            <label for="year" class="form-label">Year (Custom)</label>
+                            <input type="number" class="form-control" id="year" name="year" value="{{ custom_year }}" required>
                         </div>
                         <div class="col-md-4">
                             <label for="month" class="form-label">Month</label>
                             <select class="form-select" id="month" name="month" required>
-                                <option value="0">Astira (90 days)</option>
-                                <option value="1">Grin (90 days)</option>
-                                <option value="2">Train (90 days)</option>
-                                <option value="3">Windugi (90 days)</option>
-                                <option value="4">Kus ({% if is_leap_year %}6{% else %}5{% endif %} days)</option>
+                                <option value="0" {% if custom_month == 0 %}selected{% endif %}>Astira (90 days)</option>
+                                <option value="1" {% if custom_month == 1 %}selected{% endif %}>Grin (90 days)</option>
+                                <option value="2" {% if custom_month == 2 %}selected{% endif %}>Train (90 days)</option>
+                                <option value="3" {% if custom_month == 3 %}selected{% endif %}>Windugi (90 days)</option>
+                                <option value="4" {% if custom_month == 4 %}selected{% endif %}>Kus ({% if is_leap_year %}6{% else %}5{% endif %} days)</option>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label for="day" class="form-label">Day</label>
-                            <input type="number" class="form-control" id="day" name="day" min="1" max="90" value="1" required>
+                            <input type="number" class="form-control" id="day" name="day" min="1" max="90" value="{{ custom_day }}" required>
                         </div>
                     </div>
                     

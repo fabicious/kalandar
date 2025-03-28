@@ -2,6 +2,27 @@
 {% block title %}Kalandar - Custom Calendar System{% endblock %}
 
 {% block head %}
+<script>
+    // Current date display
+    function formatStandardDate(date) {
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        return date.toLocaleDateString(undefined, options);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add current date display to the header
+        const today = new Date();
+        const standardDateInfo = document.getElementById('standard-date-info');
+        if (standardDateInfo) {
+            standardDateInfo.textContent = formatStandardDate(today);
+        }
+    });
+</script>
 <style>
     #custom-calendar {
         max-width: 1200px;
@@ -81,8 +102,18 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h2 class="mb-4">Custom 5-Month Calendar with 10-Day Weeks</h2>
-        <p class="text-muted mb-4">A calendar with 5 months (Astira, Grin, Train, Windugi of 90 days each, and Kus of 5-6 days) and 10-day weeks</p>
+        <h2 class="mb-4">Kalandar: Custom Calendar System</h2>
+        <p class="text-muted mb-3">A calendar with 5 months (Astira, Grin, Train, Windugi of 90 days each, and Kus of 5-6 days) and 10-day weeks</p>
+        <div class="mb-4 date-info-box p-3 bg-light rounded">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Gregorian Date:</strong> <span id="standard-date-info"></span>
+                </div>
+                <div class="col-md-6">
+                    <strong>Custom Date:</strong> <span id="custom-date-info">{{ custom_today.day }} {{ custom_today.month_name }} {{ custom_today.year }} ({{ custom_today.weekday_name }})</span>
+                </div>
+            </div>
+        </div>
         
         <div class="calendar-nav">
             <button id="prev-year" class="btn btn-outline-primary">&laquo; Previous Year</button>
@@ -141,7 +172,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         const monthNames = ['Astira', 'Grin', 'Train', 'Windugi', 'Kus'];
         const daysPerMonth = [90, 90, 90, 90, null]; // 5th month depends on leap year
-        let currentYear = new Date().getFullYear();
+        // Use the passed custom date from the server
+        let currentYear = {{ custom_today.year }};
         let events = [];
         
         // Function to check if year is leap year

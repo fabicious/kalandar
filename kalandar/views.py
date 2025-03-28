@@ -1,5 +1,7 @@
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
-from .models import Event, get_days_in_month, is_leap_year, get_month_name
+from .models import Event, get_days_in_month, is_leap_year, get_month_name, get_day_of_week, get_weekday_name
+from .models import CUSTOM_EPOCH_YEAR, CUSTOM_EPOCH_MONTH, CUSTOM_EPOCH_DAY
+from .models import STANDARD_EPOCH_YEAR, STANDARD_EPOCH_MONTH, STANDARD_EPOCH_DAY
 from . import db
 import json
 from datetime import datetime, timedelta
@@ -12,47 +14,36 @@ def home():
 
 @views.route('/calendar')
 def calendar():
-    return render_template("calendar.html")
+    # Get today's date in the custom calendar
+    today = datetime.now()
+    custom_today = convert_standard_to_custom_date(today)
+    
+    return render_template("calendar.html", custom_today=custom_today)
 
 def convert_standard_to_custom_date(standard_date):
     """Convert a standard calendar date to our custom 5-month calendar date"""
-    # Get day of year (1-366)
-    day_of_year = standard_date.timetuple().tm_yday
+    from .models import standard_to_custom_date
     
-    # Convert to our custom calendar system
-    month = 0
-    day = day_of_year
+    # Get the custom date using the model function
+    custom_date = standard_to_custom_date(standard_date)
     
-    # Find the month
-    while month < 4 and day > get_days_in_month(month, standard_date.year):
-        day -= get_days_in_month(month, standard_date.year)
-        month += 1
+    # Add time information
+    custom_date['hour'] = standard_date.hour
+    custom_date['minute'] = standard_date.minute
     
-    # Check if we're in a valid date range
-    if month == 4 and day > get_days_in_month(4, standard_date.year):
-        # Date is out of range for our calendar
-        month = 4
-        day = get_days_in_month(4, standard_date.year)
-    
-    return {
-        'year': standard_date.year,
-        'month': month,  # 0-based
-        'month_name': get_month_name(month),
-        'day': day,
-        'hour': standard_date.hour,
-        'minute': standard_date.minute
-    }
+    return custom_date
 
 def convert_custom_to_standard_date(year, month, day, hour=0, minute=0):
     """Convert our custom 5-month calendar date to a standard date"""
-    # Calculate day of year
-    day_of_year = day
-    for m in range(month):
-        day_of_year += get_days_in_month(m, year)
+    from .models import custom_to_standard_date
     
-    # Convert to standard date
-    start_of_year = datetime(year, 1, 1)
-    standard_date = start_of_year + timedelta(days=day_of_year-1, hours=hour, minutes=minute)
+    # Get the standard date using the model function
+    standard_date = custom_to_standard_date(year, month, day)
+    
+    # Add time information
+    if hour != 0 or minute != 0:
+        standard_date = standard_date.replace(hour=hour, minute=minute)
+    
     return standard_date
 
 @views.route('/event', methods=['GET', 'POST'])
@@ -94,14 +85,17 @@ def create_event():
             except ValueError as e:
                 flash(f'Invalid date format: {str(e)}', category='error')
                 
-    # For GET requests, render with current year data
-    current_year = datetime.now().year
-    is_current_year_leap = is_leap_year(current_year)
+    # For GET requests, render with current custom date data
+    current_date = datetime.now()
+    custom_date = convert_standard_to_custom_date(current_date)
+    is_custom_year_leap = is_leap_year(custom_date['year'])
     
     return render_template(
         "create_event.html", 
-        current_year=current_year,
-        is_leap_year=is_current_year_leap
+        custom_year=custom_date['year'],
+        custom_month=custom_date['month'],
+        custom_day=custom_date['day'],
+        is_leap_year=is_custom_year_leap
     )
 
 @views.route('/delete-event', methods=['POST'])
