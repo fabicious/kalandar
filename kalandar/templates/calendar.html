@@ -4,27 +4,27 @@
 {% block head %}
 <style>
     #custom-calendar {
-        max-width: 1000px;
+        max-width: 1200px;
         margin: 0 auto;
     }
     .month-container {
-        margin-bottom: 20px;
+        margin-bottom: 30px;
         border: 1px solid #ddd;
         border-radius: 5px;
-        padding: 10px;
+        padding: 15px;
     }
     .month-header {
         background-color: #f8f9fa;
         padding: 10px;
         border-radius: 5px;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
         font-weight: bold;
         font-size: 1.2em;
         text-align: center;
     }
     .days-grid {
         display: grid;
-        grid-template-columns: repeat(7, 1fr);
+        grid-template-columns: repeat(10, 1fr);
         gap: 5px;
     }
     .day-cell {
@@ -50,13 +50,38 @@
         font-size: 1.5em;
         font-weight: bold;
     }
+    .day-header {
+        font-weight: bold;
+        text-align: center;
+        padding: 5px;
+        background-color: #eaeaea;
+        border-radius: 3px;
+    }
+    .week-separator {
+        grid-column: 1 / -1;
+        height: 1px;
+        background-color: #ddd;
+        margin: 5px 0;
+    }
+    .week-label {
+        grid-column: 1 / -1;
+        text-align: center;
+        font-weight: bold;
+        padding: 5px;
+        background-color: #f8f9fa;
+        margin-top: 10px;
+        margin-bottom: 5px;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h2 class="mb-4">Custom 5-Month Calendar</h2>
+        <h2 class="mb-4">Custom 5-Month Calendar with 10-Day Weeks</h2>
+        <p class="text-muted mb-4">A calendar with 5 months (4 months of 90 days, 1 month of 5-6 days) and 10-day weeks</p>
         
         <div class="calendar-nav">
             <button id="prev-year" class="btn btn-outline-primary">&laquo; Previous Year</button>
@@ -190,8 +215,8 @@
                 const daysGrid = document.createElement('div');
                 daysGrid.className = 'days-grid';
                 
-                // Add day header (1-7 for week columns)
-                for (let i = 1; i <= 7; i++) {
+                // Add day header (1-10 for week columns)
+                for (let i = 1; i <= 10; i++) {
                     const dayHeader = document.createElement('div');
                     dayHeader.className = 'day-header';
                     dayHeader.textContent = `D${i}`;
@@ -201,33 +226,67 @@
                 // Calculate days in this month
                 const daysInMonth = getDaysInMonth(month, currentYear);
                 
-                // Add day cells
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dayCell = document.createElement('div');
-                    dayCell.className = 'day-cell';
-                    dayCell.textContent = day;
+                // Calculate number of 10-day weeks in this month
+                const weeksInMonth = Math.ceil(daysInMonth / 10);
+                
+                // Add day cells organized into 10-day weeks
+                for (let week = 0; week < weeksInMonth; week++) {
+                    // Add week label
+                    const weekLabel = document.createElement('div');
+                    weekLabel.className = 'week-label';
+                    weekLabel.textContent = `Week ${week + 1}`;
+                    daysGrid.appendChild(weekLabel);
                     
-                    // Calculate day of year for event checking
-                    const dayOfYear = monthDayToDayOfYear(month, day, currentYear);
+                    // Calculate start and end day for this week
+                    const startDay = week * 10 + 1;
+                    const endDay = Math.min(startDay + 9, daysInMonth);
                     
-                    // Check if there are events on this day
-                    const hasEvents = events.some(event => {
-                        const eventDate = new Date(event.start);
-                        const startOfYear = new Date(currentYear, 0, 1);
-                        const diffDays = Math.floor((eventDate - startOfYear) / (24 * 60 * 60 * 1000)) + 1;
-                        return diffDays === dayOfYear;
-                    });
-                    
-                    if (hasEvents) {
-                        dayCell.classList.add('has-event');
+                    // Add day cells for this week
+                    for (let day = startDay; day <= endDay; day++) {
+                        const dayCell = document.createElement('div');
+                        dayCell.className = 'day-cell';
+                        dayCell.textContent = day;
+                        
+                        // Calculate day of year for event checking
+                        const dayOfYear = monthDayToDayOfYear(month, day, currentYear);
+                        
+                        // Check if there are events on this day
+                        const hasEvents = events.some(event => {
+                            const eventDate = new Date(event.start);
+                            const startOfYear = new Date(currentYear, 0, 1);
+                            const diffDays = Math.floor((eventDate - startOfYear) / (24 * 60 * 60 * 1000)) + 1;
+                            return diffDays === dayOfYear;
+                        });
+                        
+                        if (hasEvents) {
+                            dayCell.classList.add('has-event');
+                        }
+                        
+                        // Add click event for day cells
+                        dayCell.addEventListener('click', function() {
+                            showDayEvents(month, day, currentYear);
+                        });
+                        
+                        daysGrid.appendChild(dayCell);
                     }
                     
-                    // Add click event for day cells
-                    dayCell.addEventListener('click', function() {
-                        showDayEvents(month, day, currentYear);
-                    });
+                    // If this is not the last week and not a complete week, add empty cells to maintain grid
+                    if (endDay < daysInMonth && (endDay % 10) !== 0) {
+                        const emptyCellsNeeded = 10 - (endDay % 10);
+                        for (let i = 0; i < emptyCellsNeeded; i++) {
+                            const emptyCell = document.createElement('div');
+                            emptyCell.className = 'day-cell';
+                            emptyCell.style.visibility = 'hidden';
+                            daysGrid.appendChild(emptyCell);
+                        }
+                    }
                     
-                    daysGrid.appendChild(dayCell);
+                    // Add a separator after each week except the last one
+                    if (week < weeksInMonth - 1) {
+                        const weekSeparator = document.createElement('div');
+                        weekSeparator.className = 'week-separator';
+                        daysGrid.appendChild(weekSeparator);
+                    }
                 }
                 
                 monthContainer.appendChild(daysGrid);
