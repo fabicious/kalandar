@@ -46,14 +46,32 @@
     .days-grid {
         display: grid;
         grid-template-columns: repeat(10, 1fr);
-        gap: 5px;
+        gap: 3px;
     }
     .day-cell {
-        height: 40px;
+        height: 60px;
         border: 1px solid #ddd;
         text-align: center;
-        padding: 5px;
+        padding: 4px;
         cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .day-number {
+        font-size: 1.1em;
+        font-weight: bold;
+        margin-bottom: 2px;
+    }
+    .gregorian-date {
+        font-size: 0.65em;
+        color: #666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 3px;
+        border-top: 1px dotted #ddd;
+        padding-top: 2px;
     }
     .day-cell:hover {
         background-color: #f0f0f0;
@@ -235,6 +253,18 @@
             // Update year display
             document.getElementById('current-year').textContent = currentYear;
             
+            // Fetch new date mappings when the year changes
+            fetch(`/get-date-mappings/${currentYear}`)
+                .then(response => response.json())
+                .then(newMappings => {
+                    // Store the new mappings globally
+                    window.dateMappings = newMappings;
+                })
+                .catch(error => {
+                    console.error('Error fetching date mappings:', error);
+                    // Fall back to existing mappings
+                });
+            
             // Create each month container
             for (let month = 0; month < 5; month++) {
                 const monthContainer = document.createElement('div');
@@ -281,7 +311,28 @@
                     for (let day = startDay; day <= endDay; day++) {
                         const dayCell = document.createElement('div');
                         dayCell.className = 'day-cell';
-                        dayCell.textContent = day;
+                        
+                        // Create day number element
+                        const dayNumber = document.createElement('div');
+                        dayNumber.className = 'day-number';
+                        dayNumber.textContent = day;
+                        dayCell.appendChild(dayNumber);
+                        
+                        // Create Gregorian date element
+                        const gregorianDate = document.createElement('div');
+                        gregorianDate.className = 'gregorian-date';
+                        
+                        // Initialize dateMappings on first load
+                        if (!window.dateMappings) {
+                            window.dateMappings = {{ date_mappings|tojson }};
+                        }
+                        
+                        // Use the current mappings
+                        if (window.dateMappings[month] && window.dateMappings[month][day]) {
+                            gregorianDate.textContent = window.dateMappings[month][day];
+                        }
+                        
+                        dayCell.appendChild(gregorianDate);
                         
                         // Calculate day of year for event checking
                         const dayOfYear = monthDayToDayOfYear(month, day, currentYear);
@@ -405,12 +456,32 @@
         // Year navigation handlers
         document.getElementById('prev-year').addEventListener('click', function() {
             currentYear--;
-            renderCalendar();
+            // Fetch new date mappings before rendering
+            fetch(`/get-date-mappings/${currentYear}`)
+                .then(response => response.json())
+                .then(newMappings => {
+                    window.dateMappings = newMappings;
+                    renderCalendar();
+                })
+                .catch(error => {
+                    console.error('Error fetching date mappings:', error);
+                    renderCalendar();
+                });
         });
         
         document.getElementById('next-year').addEventListener('click', function() {
             currentYear++;
-            renderCalendar();
+            // Fetch new date mappings before rendering
+            fetch(`/get-date-mappings/${currentYear}`)
+                .then(response => response.json())
+                .then(newMappings => {
+                    window.dateMappings = newMappings;
+                    renderCalendar();
+                })
+                .catch(error => {
+                    console.error('Error fetching date mappings:', error);
+                    renderCalendar();
+                });
         });
         
         // Initial fetch and render

@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, flash, jsonify, redirect,
 from .models import Event, get_days_in_month, is_leap_year, get_month_name, get_day_of_week, get_weekday_name
 from .models import CUSTOM_EPOCH_YEAR, CUSTOM_EPOCH_MONTH, CUSTOM_EPOCH_DAY
 from .models import STANDARD_EPOCH_YEAR, STANDARD_EPOCH_MONTH, STANDARD_EPOCH_DAY
+from .models import custom_to_standard_date, format_standard_date
 from . import db
 import json
 from datetime import datetime, timedelta
@@ -18,7 +19,19 @@ def calendar():
     today = datetime.now()
     custom_today = convert_standard_to_custom_date(today)
     
-    return render_template("calendar.html", custom_today=custom_today)
+    # Create date mapping for the JavaScript part
+    date_mappings = {}
+    for month in range(5):
+        date_mappings[month] = {}
+        for day in range(1, get_days_in_month(month, custom_today['year']) + 1):
+            # Convert custom date to standard date
+            standard_date = custom_to_standard_date(custom_today['year'], month, day)
+            # Format the standard date
+            date_mappings[month][day] = format_standard_date(standard_date)
+    
+    return render_template("calendar.html", 
+                          custom_today=custom_today,
+                          date_mappings=date_mappings)
 
 def convert_standard_to_custom_date(standard_date):
     """Convert a standard calendar date to our custom 5-month calendar date"""
@@ -127,3 +140,18 @@ def get_events():
             'customEnd': custom_end
         })
     return jsonify(event_list)
+
+@views.route('/get-date-mappings/<int:year>')
+def get_date_mappings(year):
+    """Get date mappings for a specific custom year"""
+    # Create date mapping for the given year
+    date_mappings = {}
+    for month in range(5):
+        date_mappings[month] = {}
+        for day in range(1, get_days_in_month(month, year) + 1):
+            # Convert custom date to standard date
+            standard_date = custom_to_standard_date(year, month, day)
+            # Format the standard date
+            date_mappings[month][day] = format_standard_date(standard_date)
+    
+    return jsonify(date_mappings)

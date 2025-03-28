@@ -75,6 +75,10 @@ def custom_to_standard_date(custom_year, custom_month, custom_day):
     
     return standard_date
 
+def format_standard_date(date):
+    """Format a standard date in a short format (MM/DD/YY)"""
+    return date.strftime("%m/%d/%y")
+
 def standard_to_custom_date(standard_date):
     """Convert a standard Gregorian date to our custom calendar date"""
     # Calculate days since standard epoch
