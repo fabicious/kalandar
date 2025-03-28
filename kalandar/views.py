@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
-from .models import Event, get_days_in_month, is_leap_year
+from .models import Event, get_days_in_month, is_leap_year, get_month_name
 from . import db
 import json
 from datetime import datetime, timedelta
@@ -37,6 +37,7 @@ def convert_standard_to_custom_date(standard_date):
     return {
         'year': standard_date.year,
         'month': month,  # 0-based
+        'month_name': get_month_name(month),
         'day': day,
         'hour': standard_date.hour,
         'minute': standard_date.minute

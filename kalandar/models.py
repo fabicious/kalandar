@@ -3,15 +3,25 @@ from sqlalchemy.sql import func
 import calendar
 
 # Configure custom calendar with 5 months and 10-day weeks
-# First 4 months with 90 days, 5th month with 5 days (6 in leap year)
+# First 4 months (Astira, Grin, Train, Windugi) with 90 days each
+# Last month (Kus) with 5 days (6 in leap year)
 def is_leap_year(year):
     return calendar.isleap(year)
 
+def get_month_name(month):
+    """Returns the name of the month (0-indexed)"""
+    month_names = ['Astira', 'Grin', 'Train', 'Windugi', 'Kus']
+    if 0 <= month < len(month_names):
+        return month_names[month]
+    return None
+
 def get_days_in_month(month, year):
-    if month < 5:  # First 4 months
+    if month < 4:  # First 4 months (Astira, Grin, Train, Windugi)
         return 90
-    else:  # 5th month
+    elif month == 4:  # 5th month (Kus)
         return 6 if is_leap_year(year) else 5
+    else:
+        return 0  # Invalid month
 
 def get_total_days_in_year(year):
     return 366 if is_leap_year(year) else 365
