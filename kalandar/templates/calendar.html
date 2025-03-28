@@ -1,13 +1,54 @@
 {% extends "base.html" %}
-{% block title %}Calendar{% endblock %}
+{% block title %}Custom 5-Month Calendar{% endblock %}
 
 {% block head %}
-<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' />
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
 <style>
-    #calendar {
+    #custom-calendar {
         max-width: 1000px;
         margin: 0 auto;
+    }
+    .month-container {
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+    }
+    .month-header {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        font-weight: bold;
+        font-size: 1.2em;
+        text-align: center;
+    }
+    .days-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+    }
+    .day-cell {
+        height: 40px;
+        border: 1px solid #ddd;
+        text-align: center;
+        padding: 5px;
+        cursor: pointer;
+    }
+    .day-cell:hover {
+        background-color: #f0f0f0;
+    }
+    .calendar-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .day-cell.has-event {
+        background-color: #e2f0d9;
+    }
+    .year-display {
+        font-size: 1.5em;
+        font-weight: bold;
     }
 </style>
 {% endblock %}
@@ -15,8 +56,15 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h2 class="mb-4">Calendar</h2>
-        <div id="calendar"></div>
+        <h2 class="mb-4">Custom 5-Month Calendar</h2>
+        
+        <div class="calendar-nav">
+            <button id="prev-year" class="btn btn-outline-primary">&laquo; Previous Year</button>
+            <span class="year-display" id="current-year">2025</span>
+            <button id="next-year" class="btn btn-outline-primary">Next Year &raquo;</button>
+        </div>
+        
+        <div id="custom-calendar"></div>
     </div>
 </div>
 
@@ -41,37 +89,212 @@
         </div>
     </div>
 </div>
+
+<!-- Day Event Modal -->
+<div class="modal fade" id="dayEventsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dayEventsTitle">Events on Day XX</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="dayEventsList">
+                <!-- Event list will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <a href="/event" class="btn btn-primary">Add New Event</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var calendarEl = document.getElementById('calendar');
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            },
-            events: '/get-events',
-            editable: false,
-            eventClick: function(info) {
-                var eventObj = info.event;
-                $('#eventTitle').text(eventObj.title);
-                $('#eventStart').text(new Date(eventObj.start).toLocaleString());
-                $('#eventEnd').text(new Date(eventObj.end).toLocaleString());
-                $('#eventDescription').text(eventObj.extendedProps.description || 'No description');
-                $('#deleteEvent').data('id', eventObj.id);
-                var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
-                eventModal.show();
+        const monthNames = ['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5'];
+        const daysPerMonth = [90, 90, 90, 90, null]; // 5th month depends on leap year
+        let currentYear = new Date().getFullYear();
+        let events = [];
+        
+        // Function to check if year is leap year
+        function isLeapYear(year) {
+            return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
+        }
+        
+        // Get days in month based on our custom calendar
+        function getDaysInMonth(month, year) {
+            if (month < 4) {
+                return 90;
+            } else {
+                return isLeapYear(year) ? 6 : 5;
             }
-        });
-        calendar.render();
-
-        // Delete event handler
-        $('#deleteEvent').on('click', function() {
-            const eventId = $(this).data('id');
+        }
+        
+        // Convert day of year to month and day
+        function dayOfYearToMonthDay(dayOfYear, year) {
+            let month = 0;
+            let dayInMonth = dayOfYear;
+            
+            while (month < 4 && dayInMonth > 90) {
+                dayInMonth -= 90;
+                month++;
+            }
+            
+            // For 5th month check
+            if (month === 4 && dayInMonth > getDaysInMonth(4, year)) {
+                return null; // Invalid date
+            }
+            
+            return { month, dayInMonth };
+        }
+        
+        // Convert month and day to day of year
+        function monthDayToDayOfYear(month, day, year) {
+            let dayOfYear = day;
+            for (let i = 0; i < month; i++) {
+                dayOfYear += getDaysInMonth(i, year);
+            }
+            return dayOfYear;
+        }
+        
+        // Fetch events from server
+        function fetchEvents() {
+            fetch('/get-events')
+                .then(response => response.json())
+                .then(data => {
+                    events = data;
+                    renderCalendar();
+                });
+        }
+        
+        // Render the custom calendar
+        function renderCalendar() {
+            const calendarEl = document.getElementById('custom-calendar');
+            calendarEl.innerHTML = '';
+            
+            // Update year display
+            document.getElementById('current-year').textContent = currentYear;
+            
+            // Create each month container
+            for (let month = 0; month < 5; month++) {
+                const monthContainer = document.createElement('div');
+                monthContainer.className = 'month-container';
+                
+                const monthHeader = document.createElement('div');
+                monthHeader.className = 'month-header';
+                monthHeader.textContent = monthNames[month];
+                monthContainer.appendChild(monthHeader);
+                
+                const daysGrid = document.createElement('div');
+                daysGrid.className = 'days-grid';
+                
+                // Add day header (1-7 for week columns)
+                for (let i = 1; i <= 7; i++) {
+                    const dayHeader = document.createElement('div');
+                    dayHeader.className = 'day-header';
+                    dayHeader.textContent = `D${i}`;
+                    daysGrid.appendChild(dayHeader);
+                }
+                
+                // Calculate days in this month
+                const daysInMonth = getDaysInMonth(month, currentYear);
+                
+                // Add day cells
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'day-cell';
+                    dayCell.textContent = day;
+                    
+                    // Calculate day of year for event checking
+                    const dayOfYear = monthDayToDayOfYear(month, day, currentYear);
+                    
+                    // Check if there are events on this day
+                    const hasEvents = events.some(event => {
+                        const eventDate = new Date(event.start);
+                        const startOfYear = new Date(currentYear, 0, 1);
+                        const diffDays = Math.floor((eventDate - startOfYear) / (24 * 60 * 60 * 1000)) + 1;
+                        return diffDays === dayOfYear;
+                    });
+                    
+                    if (hasEvents) {
+                        dayCell.classList.add('has-event');
+                    }
+                    
+                    // Add click event for day cells
+                    dayCell.addEventListener('click', function() {
+                        showDayEvents(month, day, currentYear);
+                    });
+                    
+                    daysGrid.appendChild(dayCell);
+                }
+                
+                monthContainer.appendChild(daysGrid);
+                calendarEl.appendChild(monthContainer);
+            }
+        }
+        
+        // Show events for a specific day
+        function showDayEvents(month, day, year) {
+            const dayOfYear = monthDayToDayOfYear(month, day, year);
+            const dayEvents = events.filter(event => {
+                const eventDate = new Date(event.start);
+                const startOfYear = new Date(year, 0, 1);
+                const diffDays = Math.floor((eventDate - startOfYear) / (24 * 60 * 60 * 1000)) + 1;
+                return diffDays === dayOfYear;
+            });
+            
+            // Update modal title
+            document.getElementById('dayEventsTitle').textContent = `Events on ${monthNames[month]} Day ${day}`;
+            
+            // Populate event list
+            const eventsList = document.getElementById('dayEventsList');
+            eventsList.innerHTML = '';
+            
+            if (dayEvents.length === 0) {
+                eventsList.innerHTML = '<p>No events on this day.</p>';
+            } else {
+                const ul = document.createElement('ul');
+                ul.className = 'list-group';
+                
+                dayEvents.forEach(event => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    
+                    const title = document.createElement('h5');
+                    title.textContent = event.title;
+                    
+                    const times = document.createElement('p');
+                    times.innerHTML = `<small>${new Date(event.start).toLocaleTimeString()} - ${new Date(event.end).toLocaleTimeString()}</small>`;
+                    
+                    const description = document.createElement('p');
+                    description.textContent = event.description || 'No description';
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn btn-sm btn-danger mt-2';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.addEventListener('click', function() {
+                        deleteEvent(event.id);
+                    });
+                    
+                    li.appendChild(title);
+                    li.appendChild(times);
+                    li.appendChild(description);
+                    li.appendChild(deleteBtn);
+                    ul.appendChild(li);
+                });
+                
+                eventsList.appendChild(ul);
+            }
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('dayEventsModal'));
+            modal.show();
+        }
+        
+        // Delete event function
+        function deleteEvent(eventId) {
             fetch('/delete-event', {
                 method: 'POST',
                 body: JSON.stringify({ eventId: eventId }),
@@ -79,10 +302,24 @@
                     'Content-Type': 'application/json'
                 }
             }).then((_res) => {
-                calendar.refetchEvents();
-                bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+                fetchEvents();
+                bootstrap.Modal.getInstance(document.getElementById('dayEventsModal')).hide();
             });
+        }
+        
+        // Year navigation handlers
+        document.getElementById('prev-year').addEventListener('click', function() {
+            currentYear--;
+            renderCalendar();
         });
+        
+        document.getElementById('next-year').addEventListener('click', function() {
+            currentYear++;
+            renderCalendar();
+        });
+        
+        // Initial fetch and render
+        fetchEvents();
     });
 </script>
 {% endblock %}

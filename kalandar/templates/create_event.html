@@ -18,14 +18,65 @@
                         <label for="description" class="form-label">Description</label>
                         <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="start_time" class="form-label">Start Time</label>
-                        <input type="datetime-local" class="form-control" id="start_time" name="start_time" required>
+                    
+                    <h5 class="mt-4 mb-3">Custom Calendar Date</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="year" class="form-label">Year</label>
+                            <input type="number" class="form-control" id="year" name="year" value="{{ current_year }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="month" class="form-label">Month</label>
+                            <select class="form-select" id="month" name="month" required>
+                                <option value="0">Month 1 (90 days)</option>
+                                <option value="1">Month 2 (90 days)</option>
+                                <option value="2">Month 3 (90 days)</option>
+                                <option value="3">Month 4 (90 days)</option>
+                                <option value="4">Month 5 ({% if is_leap_year %}6{% else %}5{% endif %} days)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="day" class="form-label">Day</label>
+                            <input type="number" class="form-control" id="day" name="day" min="1" max="90" value="1" required>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="end_time" class="form-label">End Time</label>
-                        <input type="datetime-local" class="form-control" id="end_time" name="end_time" required>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Start Time</label>
+                            <div class="d-flex">
+                                <select class="form-select me-2" id="start_hour" name="start_hour" required>
+                                    {% for i in range(24) %}
+                                    <option value="{{ i }}">{{ '%02d'|format(i) }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="align-self-center">:</span>
+                                <select class="form-select ms-2" id="start_minute" name="start_minute" required>
+                                    {% for i in range(0, 60, 5) %}
+                                    <option value="{{ i }}">{{ '%02d'|format(i) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">End Time</label>
+                            <div class="d-flex">
+                                <select class="form-select me-2" id="end_hour" name="end_hour" required>
+                                    {% for i in range(24) %}
+                                    <option value="{{ i }}" {% if i == 1 %}selected{% endif %}>{{ '%02d'|format(i) }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="align-self-center">:</span>
+                                <select class="form-select ms-2" id="end_minute" name="end_minute" required>
+                                    {% for i in range(0, 60, 5) %}
+                                    <option value="{{ i }}">{{ '%02d'|format(i) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
+                    
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">Add Event</button>
                     </div>
@@ -34,4 +85,36 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Update max days based on selected month
+    document.addEventListener('DOMContentLoaded', function() {
+        const monthSelect = document.getElementById('month');
+        const dayInput = document.getElementById('day');
+        const yearInput = document.getElementById('year');
+        
+        function updateDayLimit() {
+            const month = parseInt(monthSelect.value);
+            if (month < 4) {
+                dayInput.max = 90;
+            } else {
+                // Month 5: check if leap year
+                const year = parseInt(yearInput.value);
+                const isLeapYear = ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
+                dayInput.max = isLeapYear ? 6 : 5;
+            }
+            
+            // Adjust day value if it exceeds the max
+            if (parseInt(dayInput.value) > parseInt(dayInput.max)) {
+                dayInput.value = dayInput.max;
+            }
+        }
+        
+        monthSelect.addEventListener('change', updateDayLimit);
+        yearInput.addEventListener('change', updateDayLimit);
+        
+        // Initialize
+        updateDayLimit();
+    });
+</script>
 {% endblock %}
