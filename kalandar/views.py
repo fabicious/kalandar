@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
-from flask_login import login_required, current_user
 from .models import Event
 from . import db
 import json
@@ -9,17 +8,13 @@ views = Blueprint('views', __name__)
 
 @views.route('/')
 def home():
-    if current_user.is_authenticated:
-        return redirect(url_for('views.calendar'))
-    return render_template("home.html", user=current_user)
+    return redirect(url_for('views.calendar'))
 
 @views.route('/calendar')
-@login_required
 def calendar():
-    return render_template("calendar.html", user=current_user)
+    return render_template("calendar.html")
 
 @views.route('/event', methods=['GET', 'POST'])
-@login_required
 def create_event():
     if request.method == 'POST':
         title = request.form.get('title')
@@ -43,8 +38,7 @@ def create_event():
                         title=title,
                         description=description,
                         start_time=start_time,
-                        end_time=end_time,
-                        user_id=current_user.id
+                        end_time=end_time
                     )
                     db.session.add(new_event)
                     db.session.commit()
@@ -53,7 +47,7 @@ def create_event():
             except ValueError:
                 flash('Invalid date format', category='error')
                 
-    return render_template("create_event.html", user=current_user)
+    return render_template("create_event.html")
 
 @views.route('/delete-event', methods=['POST'])
 def delete_event():
@@ -61,15 +55,13 @@ def delete_event():
     event_id = event_data['eventId']
     event = Event.query.get(event_id)
     if event:
-        if event.user_id == current_user.id:
-            db.session.delete(event)
-            db.session.commit()
+        db.session.delete(event)
+        db.session.commit()
     return jsonify({})
 
 @views.route('/get-events')
-@login_required
 def get_events():
-    events = Event.query.filter_by(user_id=current_user.id).all()
+    events = Event.query.all()
     event_list = []
     for event in events:
         event_list.append({
