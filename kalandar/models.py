@@ -30,6 +30,14 @@ def get_day_of_week(day_of_year):
     """Returns the day of week (1-10) for a given day of year in our custom calendar"""
     return ((day_of_year - 1) % 10) + 1
 
+def get_weekday_name(day_of_week):
+    """Returns the name of the weekday (1-10)"""
+    weekday_names = ['Antag', 'Zwitag', 'Tretag', 'Vietig', 'Fürtag', 
+                     'Sechsa', 'Septag', 'Achtag', 'Nune', 'Entag']
+    if 1 <= day_of_week <= 10:
+        return weekday_names[day_of_week - 1]
+    return None
+
 def get_week_of_month(day, month, year):
     """Returns the week number within the month"""
     day_of_year = 0
