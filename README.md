@@ -38,7 +38,7 @@ pip install -r requirements.txt
 4. Run the application:
 
 ```bash
-python main.py
+source venv/bin/activate && python main.py
 ```
 
 5. Open your web browser and navigate to: `http://127.0.0.1:5000`
