@@ -155,11 +155,23 @@ def get_events():
         custom_start = convert_standard_to_custom_date(event.start_time)
         custom_end = convert_standard_to_custom_date(event.end_time)
         
+        # Ensure all values are strings for consistent comparison
+        # JavaScript will convert the values, but making them all strings
+        # ensures consistent comparison across platforms
+        custom_start['day'] = str(custom_start['day'])
+        custom_start['month'] = str(custom_start['month'])
+        custom_start['year'] = str(custom_start['year'])
+        
+        custom_end['day'] = str(custom_end['day'])
+        custom_end['month'] = str(custom_end['month']) 
+        custom_end['year'] = str(custom_end['year'])
+        
         print(f"Converting event: ID={event.id}, Start={event.start_time}, custom_start={custom_start}")
+        print(f"Event {event.id} description: {event.description}")
         event_list.append({
             'id': event.id,
             'title': event.title,
-            'description': event.description,
+            'description': event.description if event.description else '',
             'start': event.start_time.strftime('%Y-%m-%dT%H:%M'),
             'end': event.end_time.strftime('%Y-%m-%dT%H:%M'),
             'customStart': custom_start,
@@ -188,3 +200,57 @@ def get_date_mappings(year):
     print(f"Sample mappings for year {year}: Month 0, Day 1 = {date_mappings[0][1]}")
     
     return jsonify(date_mappings)
+
+@views.route('/debug-events')
+def debug_events():
+    """Debug endpoint to check event date conversion"""
+    from datetime import datetime
+    
+    events = Event.query.all()
+    debug_info = []
+    
+    for event in events:
+        # Get the Gregorian date
+        std_date = event.start_time.strftime('%Y-%m-%d')
+        
+        # Convert to custom calendar
+        custom_date = convert_standard_to_custom_date(event.start_time)
+        
+        # Add to debug info
+        debug_info.append({
+            'id': event.id,
+            'title': event.title,
+            'standard_date': std_date,
+            'custom_date': {
+                'year': custom_date['year'],
+                'month': custom_date['month'],
+                'day': custom_date['day'],
+                'month_name': custom_date['month_name'],
+                'weekday': custom_date['weekday_name']
+            }
+        })
+    
+    # Also add key dates for reference
+    test_dates = [
+        datetime(2024, 12, 22),
+        datetime(2024, 12, 25)
+    ]
+    
+    reference_dates = []
+    for date in test_dates:
+        custom_date = convert_standard_to_custom_date(date)
+        reference_dates.append({
+            'standard_date': date.strftime('%Y-%m-%d'),
+            'custom_date': {
+                'year': custom_date['year'],
+                'month': custom_date['month'],
+                'day': custom_date['day'],
+                'month_name': custom_date['month_name'],
+                'weekday': custom_date['weekday_name']
+            }
+        })
+    
+    return jsonify({
+        'events': debug_info,
+        'reference_dates': reference_dates
+    })
