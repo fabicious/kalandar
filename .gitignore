@@ -101,3 +101,6 @@ venv.bak/
 # Database
 *.db
 *.sqlite3
+
+# macOS
+.DS_Store
