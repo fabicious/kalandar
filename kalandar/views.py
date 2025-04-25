@@ -44,6 +44,8 @@ def convert_standard_to_custom_date(standard_date):
     custom_date['hour'] = standard_date.hour
     custom_date['minute'] = standard_date.minute
     
+    print(f"Converting {standard_date} to custom date: {custom_date}")
+    
     return custom_date
 
 def convert_custom_to_standard_date(year, month, day, hour=0, minute=0):
@@ -69,21 +71,25 @@ def create_event():
         year = int(request.form.get('year', datetime.now().year))
         month = int(request.form.get('month', 0))
         day = int(request.form.get('day', 1))
-        start_hour = int(request.form.get('start_hour', 0))
-        start_minute = int(request.form.get('start_minute', 0))
-        end_hour = int(request.form.get('end_hour', 1))
-        end_minute = int(request.form.get('end_minute', 0))
         
         if not title:
             flash('Event must have a title', category='error')
         else:
             try:
                 # Convert custom dates to standard dates
-                start_time = convert_custom_to_standard_date(year, month, day, start_hour, start_minute)
-                end_time = convert_custom_to_standard_date(year, month, day, end_hour, end_minute)
+                start_time = convert_custom_to_standard_date(year, month, day)
+                # Set end time to the end of the day since all events are all-day
+                end_time = convert_custom_to_standard_date(year, month, day, 23, 59)
                 
-                if start_time >= end_time:
-                    flash('End time must be after start time', category='error')
+                # Check if the Event model has the all_day attribute
+                if hasattr(Event, 'all_day'):
+                    new_event = Event(
+                        title=title,
+                        description=description,
+                        start_time=start_time,
+                        end_time=end_time,
+                        all_day=True
+                    )
                 else:
                     new_event = Event(
                         title=title,
@@ -91,10 +97,10 @@ def create_event():
                         start_time=start_time,
                         end_time=end_time
                     )
-                    db.session.add(new_event)
-                    db.session.commit()
-                    flash('Event added!', category='success')
-                    return redirect(url_for('views.calendar'))
+                db.session.add(new_event)
+                db.session.commit()
+                flash('Event added!', category='success')
+                return redirect(url_for('views.calendar'))
             except ValueError as e:
                 flash(f'Invalid date format: {str(e)}', category='error')
                 
@@ -130,6 +136,7 @@ def get_events():
         custom_start = convert_standard_to_custom_date(event.start_time)
         custom_end = convert_standard_to_custom_date(event.end_time)
         
+        print(f"Converting event: ID={event.id}, Start={event.start_time}, custom_start={custom_start}")
         event_list.append({
             'id': event.id,
             'title': event.title,
@@ -137,7 +144,8 @@ def get_events():
             'start': event.start_time.strftime('%Y-%m-%dT%H:%M'),
             'end': event.end_time.strftime('%Y-%m-%dT%H:%M'),
             'customStart': custom_start,
-            'customEnd': custom_end
+            'customEnd': custom_end,
+            'allDay': event.all_day if hasattr(event, 'all_day') else True
         })
     return jsonify(event_list)
 

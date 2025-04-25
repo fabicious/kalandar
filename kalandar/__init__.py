@@ -24,6 +24,16 @@ def create_app():
     return app
 
 def create_database():
-    if not path.exists('kalandar/' + DB_NAME):
+    db_path = 'kalandar/' + DB_NAME
+    if not path.exists(db_path):
+        # Import here to avoid circular imports
+        from .models import Event
+        
+        # Create the tables
         db.create_all()
         print('Created Database!')
+        
+        # Check if the model has been updated (if the Event class has all_day attribute)
+        model_updated = hasattr(Event, 'all_day')
+        if model_updated:
+            print('Using updated Event model with all_day field')

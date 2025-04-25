@@ -49,7 +49,7 @@
         gap: 3px;
     }
     .day-cell {
-        height: 60px;
+        height: 70px;
         border: 1px solid #ddd;
         text-align: center;
         padding: 4px;
@@ -85,9 +85,23 @@
     .day-cell.has-event {
         background-color: #e2f0d9;
     }
+    .event-indicator {
+        height: 8px;
+        width: 8px;
+        background-color: #4CAF50;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 1px;
+    }
     .year-display {
         font-size: 1.5em;
         font-weight: bold;
+        cursor: pointer;
+        padding: 5px 10px;
+    }
+    .year-display:hover {
+        background-color: #f0f0f0;
+        border-radius: 4px;
     }
     .day-header {
         font-weight: bold;
@@ -136,6 +150,7 @@
         <div class="calendar-nav">
             <button id="prev-year" class="btn btn-outline-primary">&laquo; Previous Year</button>
             <span class="year-display" id="current-year">2025</span>
+            <input type="number" id="year-input" class="form-control d-none" style="width: 100px; display: inline-block;">
             <button id="next-year" class="btn btn-outline-primary">Next Year &raquo;</button>
         </div>
         
@@ -175,6 +190,12 @@
             </div>
             <div class="modal-body" id="dayEventsList">
                 <!-- Event list will be populated here -->
+                <div class="text-center py-3 d-none" id="day-events-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading events...</p>
+                </div>
             </div>
             <div class="modal-footer">
                 <a href="/event" class="btn btn-primary">Add New Event</a>
@@ -193,6 +214,8 @@
         // Use the passed custom date from the server
         let currentYear = {{ custom_today.year }};
         let events = [];
+        
+        console.log("Current year set to:", currentYear);
         
         // Function to check if year is leap year
         function isLeapYear(year) {
@@ -241,6 +264,7 @@
                 .then(response => response.json())
                 .then(data => {
                     events = data;
+                    console.log("Fetched events:", events);
                     renderCalendar();
                 });
         }
@@ -339,14 +363,42 @@
                         
                         // Check if there are events on this day
                         const hasEvents = events.some(event => {
-                            const eventDate = new Date(event.start);
-                            const startOfYear = new Date(currentYear, 0, 1);
-                            const diffDays = Math.floor((eventDate - startOfYear) / (24 * 60 * 60 * 1000)) + 1;
-                            return diffDays === dayOfYear;
+                            console.log(`Checking event on ${month}/${day}/${currentYear} against:`, 
+                                      event.customStart.month, event.customStart.day, event.customStart.year);
+                                      
+                            const matchesYear = parseInt(event.customStart.year) === parseInt(currentYear);
+                            const matchesMonth = parseInt(event.customStart.month) === parseInt(month);
+                            const matchesDay = parseInt(event.customStart.day) === parseInt(day);
+                            
+                            console.log(`Year match: ${matchesYear}, Month match: ${matchesMonth}, Day match: ${matchesDay}`);
+                            
+                            return matchesYear && matchesMonth && matchesDay;
                         });
                         
                         if (hasEvents) {
                             dayCell.classList.add('has-event');
+                            
+                            // Add event indicator dots
+                            const eventIndicators = document.createElement('div');
+                            eventIndicators.className = 'event-indicators';
+                            eventIndicators.style.textAlign = 'center';
+                            
+                            // Count how many events are on this day
+                            const dayEventCount = events.filter(event => {
+                                return (parseInt(event.customStart.year) === parseInt(currentYear) && 
+                                       parseInt(event.customStart.month) === parseInt(month) && 
+                                       parseInt(event.customStart.day) === parseInt(day));
+                            }).length;
+                            
+                            // Create indicator dots (max 3)
+                            const dotsToShow = Math.min(dayEventCount, 3);
+                            for (let i = 0; i < dotsToShow; i++) {
+                                const dot = document.createElement('span');
+                                dot.className = 'event-indicator';
+                                eventIndicators.appendChild(dot);
+                            }
+                            
+                            dayCell.appendChild(eventIndicators);
                         }
                         
                         // Add click event for day cells
@@ -384,22 +436,51 @@
         // Show events for a specific day
         function showDayEvents(month, day, year) {
             const dayOfYear = monthDayToDayOfYear(month, day, year);
-            const dayEvents = events.filter(event => {
-                const eventDate = new Date(event.start);
-                const startOfYear = new Date(year, 0, 1);
-                const diffDays = Math.floor((eventDate - startOfYear) / (24 * 60 * 60 * 1000)) + 1;
-                return diffDays === dayOfYear;
-            });
+            console.log(`Looking for events on day ${day} of month ${month} in year ${year}, day of year: ${dayOfYear}`);
+            
+            // Show loading indicator
+            const loadingIndicator = document.getElementById('day-events-loading');
+            const eventsList = document.getElementById('dayEventsList');
+            
+            if (loadingIndicator) {
+                loadingIndicator.classList.remove('d-none');
+            }
+            
+            // Show the modal first
+            const modal = new bootstrap.Modal(document.getElementById('dayEventsModal'));
+            modal.show();
+            
+            // In case events need to be refreshed
+            fetch('/get-events')
+                .then(response => response.json())
+                .then(data => {
+                    events = data;
+                    console.log('Updated events:', events);
+                    
+                    const dayEvents = events.filter(event => {
+                        // For custom calendar, look at customStart property 
+                        return (parseInt(event.customStart.year) === parseInt(year) && 
+                                parseInt(event.customStart.month) === parseInt(month) && 
+                                parseInt(event.customStart.day) === parseInt(day));
+                    });
             
             // Update modal title
             document.getElementById('dayEventsTitle').textContent = `Events on ${monthNames[month]} Day ${day}`;
             
             // Populate event list
             const eventsList = document.getElementById('dayEventsList');
-            eventsList.innerHTML = '';
+            
+            // Clear previous content except the loading indicator
+            Array.from(eventsList.children).forEach(child => {
+                if (!child.id || child.id !== 'day-events-loading') {
+                    eventsList.removeChild(child);
+                }
+            });
             
             if (dayEvents.length === 0) {
-                eventsList.innerHTML = '<p>No events on this day.</p>';
+                const noEvents = document.createElement('p');
+                noEvents.textContent = 'No events on this day.';
+                eventsList.appendChild(noEvents);
             } else {
                 const ul = document.createElement('ul');
                 ul.className = 'list-group';
@@ -412,7 +493,11 @@
                     title.textContent = event.title;
                     
                     const times = document.createElement('p');
-                    times.innerHTML = `<small>${new Date(event.start).toLocaleTimeString()} - ${new Date(event.end).toLocaleTimeString()}</small>`;
+                    if (event.allDay) {
+                        times.innerHTML = `<small><em>All day event</em></small>`;
+                    } else {
+                        times.innerHTML = `<small>${new Date(event.start).toLocaleTimeString()} - ${new Date(event.end).toLocaleTimeString()}</small>`;
+                    }
                     
                     const description = document.createElement('p');
                     description.textContent = event.description || 'No description';
@@ -434,9 +519,21 @@
                 eventsList.appendChild(ul);
             }
             
-            // Show the modal
-            const modal = new bootstrap.Modal(document.getElementById('dayEventsModal'));
-            modal.show();
+            // Hide loading indicator
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('d-none');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching events:', error);
+            const eventsList = document.getElementById('dayEventsList');
+            eventsList.innerHTML = '<p>Error loading events. Please try again.</p>';
+            
+            // Hide loading indicator on error
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('d-none');
+            }
+        });
         }
         
         // Delete event function
@@ -456,23 +553,53 @@
         // Year navigation handlers
         document.getElementById('prev-year').addEventListener('click', function() {
             currentYear--;
-            // Fetch new date mappings before rendering
-            fetch(`/get-date-mappings/${currentYear}`)
-                .then(response => response.json())
-                .then(newMappings => {
-                    window.dateMappings = newMappings;
-                    renderCalendar();
-                })
-                .catch(error => {
-                    console.error('Error fetching date mappings:', error);
-                    renderCalendar();
-                });
+            updateCalendarYear(currentYear);
         });
         
         document.getElementById('next-year').addEventListener('click', function() {
             currentYear++;
+            updateCalendarYear(currentYear);
+        });
+        
+        // Make the year clickable to edit
+        const yearDisplay = document.getElementById('current-year');
+        const yearInput = document.getElementById('year-input');
+        
+        yearDisplay.addEventListener('click', function() {
+            // Switch to edit mode
+            yearInput.value = currentYear;
+            yearDisplay.classList.add('d-none');
+            yearInput.classList.remove('d-none');
+            yearInput.focus();
+        });
+        
+        // Handle year input
+        yearInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const newYear = parseInt(yearInput.value);
+                if (!isNaN(newYear)) {
+                    currentYear = newYear;
+                    updateCalendarYear(currentYear);
+                }
+                yearInput.classList.add('d-none');
+                yearDisplay.classList.remove('d-none');
+            } else if (e.key === 'Escape') {
+                yearInput.classList.add('d-none');
+                yearDisplay.classList.remove('d-none');
+            }
+        });
+        
+        // Also handle blur event to exit edit mode
+        yearInput.addEventListener('blur', function() {
+            yearInput.classList.add('d-none');
+            yearDisplay.classList.remove('d-none');
+        });
+        
+        // Function to update calendar year
+        function updateCalendarYear(year) {
             // Fetch new date mappings before rendering
-            fetch(`/get-date-mappings/${currentYear}`)
+            fetch(`/get-date-mappings/${year}`)
                 .then(response => response.json())
                 .then(newMappings => {
                     window.dateMappings = newMappings;
@@ -482,7 +609,7 @@
                     console.error('Error fetching date mappings:', error);
                     renderCalendar();
                 });
-        });
+        }
         
         // Initial fetch and render
         fetchEvents();
