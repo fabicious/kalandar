@@ -42,39 +42,8 @@
                         </div>
                     </div>
                     
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Start Time</label>
-                            <div class="d-flex">
-                                <select class="form-select me-2" id="start_hour" name="start_hour" required>
-                                    {% for i in range(24) %}
-                                    <option value="{{ i }}">{{ '%02d'|format(i) }}</option>
-                                    {% endfor %}
-                                </select>
-                                <span class="align-self-center">:</span>
-                                <select class="form-select ms-2" id="start_minute" name="start_minute" required>
-                                    {% for i in range(0, 60, 5) %}
-                                    <option value="{{ i }}">{{ '%02d'|format(i) }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">End Time</label>
-                            <div class="d-flex">
-                                <select class="form-select me-2" id="end_hour" name="end_hour" required>
-                                    {% for i in range(24) %}
-                                    <option value="{{ i }}" {% if i == 1 %}selected{% endif %}>{{ '%02d'|format(i) }}</option>
-                                    {% endfor %}
-                                </select>
-                                <span class="align-self-center">:</span>
-                                <select class="form-select ms-2" id="end_minute" name="end_minute" required>
-                                    {% for i in range(0, 60, 5) %}
-                                    <option value="{{ i }}">{{ '%02d'|format(i) }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
+                    <div class="alert alert-info mb-3">
+                        <p class="mb-0">All events are full-day events. The specific time of day is not relevant.</p>
                     </div>
                     
                     <div class="d-grid gap-2">
