@@ -492,12 +492,7 @@
                     const title = document.createElement('h5');
                     title.textContent = event.title;
                     
-                    const times = document.createElement('p');
-                    if (event.allDay) {
-                        times.innerHTML = `<small><em>All day event</em></small>`;
-                    } else {
-                        times.innerHTML = `<small>${new Date(event.start).toLocaleTimeString()} - ${new Date(event.end).toLocaleTimeString()}</small>`;
-                    }
+                    // No time information needed as all events are full-day
                     
                     const description = document.createElement('p');
                     description.textContent = event.description || 'No description';
@@ -510,7 +505,6 @@
                     });
                     
                     li.appendChild(title);
-                    li.appendChild(times);
                     li.appendChild(description);
                     li.appendChild(deleteBtn);
                     ul.appendChild(li);
