@@ -104,16 +104,32 @@ def create_event():
             except ValueError as e:
                 flash(f'Invalid date format: {str(e)}', category='error')
                 
-    # For GET requests, render with current custom date data
-    current_date = datetime.now()
-    custom_date = convert_standard_to_custom_date(current_date)
-    is_custom_year_leap = is_leap_year(custom_date['year'])
+    # For GET requests, render with date data from parameters or current date
+    # Check if date parameters were passed in request
+    year = request.args.get('year')
+    month = request.args.get('month')
+    day = request.args.get('day')
+    
+    if year and month and day:
+        # Use provided date parameters
+        custom_year = int(year)
+        custom_month = int(month)
+        custom_day = int(day)
+    else:
+        # Use current date
+        current_date = datetime.now()
+        custom_date = convert_standard_to_custom_date(current_date)
+        custom_year = custom_date['year']
+        custom_month = custom_date['month']
+        custom_day = custom_date['day']
+    
+    is_custom_year_leap = is_leap_year(custom_year)
     
     return render_template(
         "create_event.html", 
-        custom_year=custom_date['year'],
-        custom_month=custom_date['month'],
-        custom_day=custom_date['day'],
+        custom_year=custom_year,
+        custom_month=custom_month,
+        custom_day=custom_day,
         is_leap_year=is_custom_year_leap
     )
 

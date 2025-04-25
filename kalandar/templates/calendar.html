@@ -198,7 +198,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <a href="/event" class="btn btn-primary">Add New Event</a>
+                <a href="/event" id="add-event-btn" class="btn btn-primary">Add New Event</a>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
@@ -437,6 +437,12 @@
         function showDayEvents(month, day, year) {
             const dayOfYear = monthDayToDayOfYear(month, day, year);
             console.log(`Looking for events on day ${day} of month ${month} in year ${year}, day of year: ${dayOfYear}`);
+            
+            // Update the Add Event button to include the clicked date
+            const addEventBtn = document.getElementById('add-event-btn');
+            if (addEventBtn) {
+                addEventBtn.href = `/event?year=${year}&month=${month}&day=${day}`;
+            }
             
             // Show loading indicator
             const loadingIndicator = document.getElementById('day-events-loading');
