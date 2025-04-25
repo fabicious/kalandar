@@ -58,6 +58,10 @@
         flex-direction: column;
         justify-content: space-between;
     }
+    .day-cell.today {
+        background-color: #f0f8ff;
+        border: 2px solid #007bff;
+    }
     .day-number {
         font-size: 1.1em;
         font-weight: bold;
@@ -98,10 +102,13 @@
         font-weight: bold;
         cursor: pointer;
         padding: 5px 10px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        border: 1px dashed #ccc;
     }
     .year-display:hover {
-        background-color: #f0f0f0;
-        border-radius: 4px;
+        background-color: #e9ecef;
+        border-color: #adb5bd;
     }
     .day-header {
         font-weight: bold;
@@ -148,10 +155,17 @@
         </div>
         
         <div class="calendar-nav">
-            <button id="prev-year" class="btn btn-outline-primary">&laquo; Previous Year</button>
-            <span class="year-display" id="current-year">2025</span>
-            <input type="number" id="year-input" class="form-control d-none" style="width: 100px; display: inline-block;">
-            <button id="next-year" class="btn btn-outline-primary">Next Year &raquo;</button>
+            <div class="row align-items-center">
+                <div class="col">
+                    <button id="prev-year" class="btn btn-outline-primary">&laquo; Previous Year</button>
+                    <span class="year-display" id="current-year">2025</span>
+                    <input type="number" id="year-input" class="form-control d-none" style="width: 100px; display: inline-block;">
+                    <button id="next-year" class="btn btn-outline-primary">Next Year &raquo;</button>
+                </div>
+                <div class="col-auto">
+                    <button id="go-to-today" class="btn btn-info">Today</button>
+                </div>
+            </div>
         </div>
         
         <div id="custom-calendar"></div>
@@ -366,6 +380,17 @@
                     for (let day = startDay; day <= endDay; day++) {
                         const dayCell = document.createElement('div');
                         dayCell.className = 'day-cell';
+                        
+                        // Highlight today's date if we're in the current year and this is today
+                        const isCurrentDay = (
+                            currentYear === {{ custom_today.year }} && 
+                            month === {{ custom_today.month }} && 
+                            day === {{ custom_today.day }}
+                        );
+                        
+                        if (isCurrentDay) {
+                            dayCell.classList.add('today');
+                        }
                         
                         // Create day number element
                         const dayNumber = document.createElement('div');
@@ -772,6 +797,14 @@
         yearInput.addEventListener('blur', function() {
             yearInput.classList.add('d-none');
             yearDisplay.classList.remove('d-none');
+        });
+        
+        // Go to today button
+        document.getElementById('go-to-today').addEventListener('click', function() {
+            const today = new Date();
+            // Default to the server's custom_today year if available
+            currentYear = {{ custom_today.year }};
+            updateCalendarYear(currentYear);
         });
         
         // Function to update calendar year
