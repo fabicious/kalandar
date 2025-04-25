@@ -211,8 +211,14 @@
     document.addEventListener('DOMContentLoaded', function() {
         const monthNames = ['Astira', 'Grin', 'Train', 'Windugi', 'Kus'];
         const daysPerMonth = [90, 90, 90, 90, null]; // 5th month depends on leap year
-        // Use the passed custom date from the server
-        let currentYear = {{ custom_today.year }};
+        
+        // IMPORTANT: Force parse the year as an integer and store it in a Number variable
+        let serverYear = parseInt("{{ custom_today.year }}", 10);
+        console.log("Raw year value from server:", "{{ custom_today.year }}");
+        console.log("Parsed server year:", serverYear);
+        
+        // Explicitly verify we have a valid number before using it
+        let currentYear = !isNaN(serverYear) ? serverYear : new Date().getFullYear();
         let events = [];
         
         console.log("Current year set to:", currentYear);
@@ -276,18 +282,33 @@
             
             // Update year display
             document.getElementById('current-year').textContent = currentYear;
+            console.log("Setting current year display to:", currentYear);
             
             // Fetch new date mappings when the year changes
+            console.log("Fetching date mappings for year:", currentYear);
             fetch(`/get-date-mappings/${currentYear}`)
-                .then(response => response.json())
+                .then(response => {
+                    console.log("Got response from date mappings endpoint:", response.status);
+                    return response.json();
+                })
                 .then(newMappings => {
                     // Store the new mappings globally
+                    console.log("Received new date mappings:", newMappings);
                     window.dateMappings = newMappings;
+                    // After we have the mappings, render the months
+                    renderMonths();
                 })
                 .catch(error => {
                     console.error('Error fetching date mappings:', error);
-                    // Fall back to existing mappings
+                    // Fall back to existing mappings and render anyway
+                    renderMonths();
                 });
+        }
+        
+        // Function to render the months
+        function renderMonths() {
+            const calendarEl = document.getElementById('custom-calendar');
+            calendarEl.innerHTML = '';
             
             // Create each month container
             for (let month = 0; month < 5; month++) {
@@ -348,12 +369,15 @@
                         
                         // Initialize dateMappings on first load
                         if (!window.dateMappings) {
+                            console.log("Using initial date mappings from server");
                             window.dateMappings = {{ date_mappings|tojson }};
                         }
                         
                         // Use the current mappings
                         if (window.dateMappings[month] && window.dateMappings[month][day]) {
                             gregorianDate.textContent = window.dateMappings[month][day];
+                        } else {
+                            console.log(`No mapping found for ${month}/${day}`);
                         }
                         
                         dayCell.appendChild(gregorianDate);
@@ -577,11 +601,18 @@
         yearInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const newYear = parseInt(yearInput.value);
+                const newYear = parseInt(yearInput.value, 10);
+                console.log("Year input value:", yearInput.value);
+                console.log("Parsed new year:", newYear);
+                
                 if (!isNaN(newYear)) {
                     currentYear = newYear;
+                    console.log("Setting currentYear to:", currentYear);
                     updateCalendarYear(currentYear);
+                } else {
+                    console.error("Invalid year input:", yearInput.value);
                 }
+                
                 yearInput.classList.add('d-none');
                 yearDisplay.classList.remove('d-none');
             } else if (e.key === 'Escape') {

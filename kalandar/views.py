@@ -19,6 +19,9 @@ def calendar():
     today = datetime.now()
     custom_today = convert_standard_to_custom_date(today)
     
+    # Debug output
+    print(f"Calendar view: Today's custom date is {custom_today['year']}-{custom_today['month']}-{custom_today['day']}")
+    
     # Create date mapping for the JavaScript part
     date_mappings = {}
     for month in range(5):
@@ -168,6 +171,9 @@ def get_events():
 @views.route('/get-date-mappings/<int:year>')
 def get_date_mappings(year):
     """Get date mappings for a specific custom year"""
+    # Debug output
+    print(f"Generating date mappings for year: {year}")
+    
     # Create date mapping for the given year
     date_mappings = {}
     for month in range(5):
@@ -177,5 +183,8 @@ def get_date_mappings(year):
             standard_date = custom_to_standard_date(year, month, day)
             # Format the standard date
             date_mappings[month][day] = format_standard_date(standard_date)
+    
+    # Log the first few mappings to verify
+    print(f"Sample mappings for year {year}: Month 0, Day 1 = {date_mappings[0][1]}")
     
     return jsonify(date_mappings)
