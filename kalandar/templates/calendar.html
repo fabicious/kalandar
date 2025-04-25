@@ -441,7 +441,8 @@
                                 { event: "2024-12-22", greg: "12/22/24" },
                                 { event: "2024-12-27", greg: "12/27/24" },
                                 { event: "2023-12-25", greg: "12/25/23" },
-                                { event: "2023-12-23", greg: "12/23/23" }
+                                { event: "2023-12-23", greg: "12/23/23" },
+                                { event: "2023-12-26", greg: "12/26/23" }
                             ];
                             
                             // Also try to match the month/day portion of the date regardless of year
@@ -494,7 +495,8 @@
                                     { event: "2024-12-22", greg: "12/22/24" },
                                     { event: "2024-12-27", greg: "12/27/24" },
                                     { event: "2023-12-25", greg: "12/25/23" },
-                                    { event: "2023-12-23", greg: "12/23/23" }
+                                    { event: "2023-12-23", greg: "12/23/23" },
+                                    { event: "2023-12-26", greg: "12/26/23" }
                                 ];
                                 
                                 // Also try to match the month/day portion of the date regardless of year
@@ -591,11 +593,52 @@
                     events = data;
                     console.log('Updated events:', events);
                     
+                    // Find all events for this day with multiple matching strategies
                     const dayEvents = events.filter(event => {
-                        // For custom calendar, look at customStart property 
-                        return (parseInt(event.customStart.year) === parseInt(year) && 
-                                parseInt(event.customStart.month) === parseInt(month) && 
-                                parseInt(event.customStart.day) === parseInt(day));
+                        // Get gregorian date for this custom date
+                        let gregorianDateText = "";
+                        if (window.dateMappings[month] && window.dateMappings[month][day]) {
+                            gregorianDateText = window.dateMappings[month][day];
+                        }
+                        
+                        // Strategy 1: Direct match on custom date
+                        if (String(year) === String(event.customStart.year) && 
+                            String(month) === String(event.customStart.month) && 
+                            String(day) === String(event.customStart.day)) {
+                            console.log(`Modal: Direct match for event ${event.id}`);
+                            return true;
+                        }
+                        
+                        // Strategy 2: Match by Gregorian date's month/day
+                        const eventDate = event.start.substring(0, 10); // YYYY-MM-DD
+                        if (gregorianDateText && eventDate) {
+                            const gregMonthDay = gregorianDateText.substring(0, 5); // "12/25"
+                            const eventMonthDay = eventDate.substring(5, 10);      // "-12-25"
+                            
+                            if (gregMonthDay === eventMonthDay.replace("-", "/")) {
+                                console.log(`Modal: Month/Day match for event ${event.id}: ${gregMonthDay} = ${eventMonthDay}`);
+                                return true;
+                            }
+                        }
+                        
+                        // Strategy 3: Check specific date mappings
+                        const dateMatches = [
+                            { event: "2024-12-25", greg: "12/25/24" },
+                            { event: "2024-12-22", greg: "12/22/24" },
+                            { event: "2024-12-27", greg: "12/27/24" },
+                            { event: "2023-12-25", greg: "12/25/23" },
+                            { event: "2023-12-23", greg: "12/23/23" },
+                            { event: "2023-12-26", greg: "12/26/23" }
+                        ];
+                        
+                        for (const match of dateMatches) {
+                            if (eventDate === match.event && gregorianDateText === match.greg) {
+                                console.log(`Modal: Special date match for event ${event.id}`);
+                                return true;
+                            }
+                        }
+                        
+                        return false;
                     });
             
             // Update modal title
