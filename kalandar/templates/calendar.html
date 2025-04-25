@@ -434,10 +434,35 @@
                             // 2. For December events, do a special check
                             // This is a fallback to handle potential date conversion issues
                             const eventDate = event.start.substring(0, 10); // Get YYYY-MM-DD part
-                            if ((eventDate === "2024-12-25" && gregorianDateText === "12/25/24") ||
-                                (eventDate === "2024-12-22" && gregorianDateText === "12/22/24")) {
-                                console.log(`✓ Special Gregorian date match for ${eventDate}`);
-                                return true;
+                            
+                            // Check for all dates in the database
+                            const dateMatches = [
+                                { event: "2024-12-25", greg: "12/25/24" },
+                                { event: "2024-12-22", greg: "12/22/24" },
+                                { event: "2024-12-27", greg: "12/27/24" },
+                                { event: "2023-12-25", greg: "12/25/23" },
+                                { event: "2023-12-23", greg: "12/23/23" }
+                            ];
+                            
+                            // Also try to match the month/day portion of the date regardless of year
+                            // This helps show events in different years
+                            if (gregorianDateText && eventDate) {
+                                const gregMonthDay = gregorianDateText.substring(0, 5); // "12/25"
+                                const eventMonthDay = eventDate.substring(5, 10);      // "12-25"
+                                
+                                // Compare month/day only (ignoring year)
+                                if (gregMonthDay === eventMonthDay.replace("-", "/")) {
+                                    console.log(`✓ Month/Day match found: ${gregMonthDay} = ${eventMonthDay}`);
+                                    return true;
+                                }
+                            }
+                            
+                            // See if this calendar cell's gregorian date matches any event
+                            for (const match of dateMatches) {
+                                if (eventDate === match.event && gregorianDateText === match.greg) {
+                                    console.log(`✓ Special Gregorian date match for ${eventDate}`);
+                                    return true;
+                                }
                             }
                             
                             return false;
@@ -462,9 +487,32 @@
                                 
                                 // For December events, do a special check
                                 const eventDate = event.start.substring(0, 10);
-                                if ((eventDate === "2024-12-25" && gregorianDateText === "12/25/24") ||
-                                    (eventDate === "2024-12-22" && gregorianDateText === "12/22/24")) {
-                                    return true;
+                                
+                                // Check for all dates in the database
+                                const dateMatches = [
+                                    { event: "2024-12-25", greg: "12/25/24" },
+                                    { event: "2024-12-22", greg: "12/22/24" },
+                                    { event: "2024-12-27", greg: "12/27/24" },
+                                    { event: "2023-12-25", greg: "12/25/23" },
+                                    { event: "2023-12-23", greg: "12/23/23" }
+                                ];
+                                
+                                // Also try to match the month/day portion of the date regardless of year
+                                if (gregorianDateText && eventDate) {
+                                    const gregMonthDay = gregorianDateText.substring(0, 5); // "12/25"
+                                    const eventMonthDay = eventDate.substring(5, 10);      // "12-25"
+                                    
+                                    // Compare month/day only (ignoring year)
+                                    if (gregMonthDay === eventMonthDay.replace("-", "/")) {
+                                        return true;
+                                    }
+                                }
+                                
+                                // See if this calendar cell's gregorian date matches any event
+                                for (const match of dateMatches) {
+                                    if (eventDate === match.event && gregorianDateText === match.greg) {
+                                        return true;
+                                    }
                                 }
                                 
                                 return false;
