@@ -172,4 +172,5 @@ class Event(db.Model):
     description = db.Column(db.String(1000))
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
+    all_day = db.Column(db.Boolean, default=True)
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
