@@ -1,19 +1,48 @@
-from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
+from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for, session
+from functools import wraps
 from .models import Event, get_days_in_month, is_leap_year, get_month_name, get_day_of_week, get_weekday_name
 from .models import CUSTOM_EPOCH_YEAR, CUSTOM_EPOCH_MONTH, CUSTOM_EPOCH_DAY
 from .models import STANDARD_EPOCH_YEAR, STANDARD_EPOCH_MONTH, STANDARD_EPOCH_DAY
 from .models import custom_to_standard_date, format_standard_date
 from . import db
+import os
 import json
 from datetime import datetime, timedelta
 
 views = Blueprint('views', __name__)
+
+SITE_PASSWORD = os.environ.get('SITE_PASSWORD', 'kalandar')
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('authenticated'):
+            return redirect(url_for('views.login'))
+        return f(*args, **kwargs)
+    return decorated
+
+@views.route('/login', methods=['GET', 'POST'])
+def login():
+    if session.get('authenticated'):
+        return redirect(url_for('views.calendar'))
+    if request.method == 'POST':
+        if request.form.get('password') == SITE_PASSWORD:
+            session['authenticated'] = True
+            return redirect(url_for('views.calendar'))
+        flash('Wrong password', category='error')
+    return render_template('login.html')
+
+@views.route('/logout')
+def logout():
+    session.pop('authenticated', None)
+    return redirect(url_for('views.login'))
 
 @views.route('/')
 def home():
     return redirect(url_for('views.calendar'))
 
 @views.route('/calendar')
+@login_required
 def calendar():
     today = datetime.now()
     custom_today = convert_standard_to_custom_date(today)
@@ -51,6 +80,7 @@ def convert_custom_to_standard_date(year, month, day, hour=0, minute=0):
     return standard_date
 
 @views.route('/event', methods=['GET', 'POST'])
+@login_required
 def create_event():
     if request.method == 'POST':
         title = request.form.get('title')
@@ -113,6 +143,7 @@ def create_event():
     )
 
 @views.route('/delete-event', methods=['POST'])
+@login_required
 def delete_event():
     event_data = json.loads(request.data)
     event_id = event_data['eventId']
@@ -123,6 +154,7 @@ def delete_event():
     return jsonify({})
 
 @views.route('/get-events')
+@login_required
 def get_events():
     events = Event.query.all()
     event_list = []
@@ -150,7 +182,35 @@ def get_events():
         })
     return jsonify(event_list)
 
+@views.route('/events')
+@login_required
+def event_list():
+    events = Event.query.order_by(Event.start_time).all()
+
+    # Group events by custom calendar year
+    events_by_year = {}
+    for event in events:
+        custom_date = convert_standard_to_custom_date(event.start_time)
+        year = custom_date['year']
+        if year not in events_by_year:
+            events_by_year[year] = []
+        events_by_year[year].append({
+            'id': event.id,
+            'title': event.title,
+            'description': event.description or '',
+            'day': custom_date['day'],
+            'month_name': custom_date['month_name'],
+        })
+
+    # Sort years descending (most recent first)
+    sorted_years = sorted(events_by_year.keys(), reverse=True)
+
+    return render_template("events.html",
+                           events_by_year=events_by_year,
+                           sorted_years=sorted_years)
+
 @views.route('/get-date-mappings/<int:year>')
+@login_required
 def get_date_mappings(year):
     """Get date mappings for a specific custom year"""
     date_mappings = {}
