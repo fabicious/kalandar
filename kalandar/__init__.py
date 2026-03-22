@@ -5,11 +5,13 @@ import os
 
 db = SQLAlchemy()
 DB_NAME = "kalandar.db"
+BASE_DIR = path.abspath(path.dirname(__file__))
 
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
+    db_path = path.join(BASE_DIR, DB_NAME)
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
@@ -25,7 +27,7 @@ def create_app():
     return app
 
 def create_database():
-    db_path = 'kalandar/' + DB_NAME
+    db_path = path.join(BASE_DIR, DB_NAME)
     if not path.exists(db_path):
         from .models import Event
         db.create_all()
