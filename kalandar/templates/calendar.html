@@ -16,30 +16,23 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h2 class="mb-4">Kalandar</h2>
-        <p class="text-muted mb-3">Five months &mdash; Astira, Grin, Train, Windugi of 90 days each, and Kus of 5&ndash;6 days &mdash; in weeks of ten</p>
-        <div class="mb-4 date-info-box p-3 bg-light rounded">
-            <div class="row">
-                <div class="col-md-6">
-                    <strong>Kapalaran Date:</strong> <span id="custom-date-info">{{ custom_today.weekday_name }}, {{ custom_today.month_name }} {{ custom_today.day }}, {{ custom_today.year }}</span>
+        <div class="date-info-box p-3 rounded mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <strong>Today:</strong> <span id="custom-date-info">{{ custom_today.weekday_name }}, {{ custom_today.month_name }} {{ custom_today.day }}, {{ custom_today.year }}</span>
+                    <span class="text-muted ms-2">(<span id="standard-date-info"></span>)</span>
                 </div>
-                <div class="col-md-6">
-                    <strong>Gregorian Date:</strong> <span id="standard-date-info"></span>
-                </div>
+                <a href="/event" class="btn btn-primary btn-sm">+ New Event</a>
             </div>
         </div>
 
-        <div class="calendar-nav">
-            <div class="row align-items-center">
-                <div class="col">
-                    <button id="prev-year" class="btn btn-outline-primary">&laquo; Previous Year</button>
-                    <span class="year-display" id="current-year">{{ custom_today.year }}</span>
-                    <input type="number" id="year-input" class="form-control d-none" style="width: 100px; display: inline-block;">
-                    <button id="next-year" class="btn btn-outline-primary">Next Year &raquo;</button>
-                </div>
-                <div class="col-auto">
-                    <button id="go-to-today" class="btn btn-info">Today</button>
-                </div>
+        <div class="calendar-nav mb-4">
+            <div class="d-flex justify-content-center align-items-center gap-3">
+                <button id="prev-year" class="btn btn-outline-primary btn-sm">&laquo;</button>
+                <span class="year-display" id="current-year">{{ custom_today.year }}</span>
+                <input type="number" id="year-input" class="form-control d-none" style="width: 100px;">
+                <button id="next-year" class="btn btn-outline-primary btn-sm">&raquo;</button>
+                <button id="go-to-today" class="btn btn-secondary btn-sm">Today</button>
             </div>
         </div>
 
@@ -86,7 +79,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <a href="/event" id="add-event-btn" class="btn btn-primary">Add New Event</a>
+                <a href="/event" id="add-event-btn" class="btn btn-primary">+ Add Event on This Day</a>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>

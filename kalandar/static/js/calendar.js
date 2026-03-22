@@ -281,6 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function deleteEvent(eventId) {
+        if (!confirm('Delete this event?')) return;
         fetch('/delete-event', {
             method: 'POST',
             body: JSON.stringify({ eventId: eventId }),
