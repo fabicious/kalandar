@@ -119,7 +119,8 @@ def create_event():
                 db.session.add(new_event)
                 db.session.commit()
                 flash('Event added!', category='success')
-                return redirect(url_for('views.calendar'))
+                next_url = request.form.get('next') or url_for('views.calendar')
+                return redirect(next_url)
             except ValueError as e:
                 flash(f'Invalid date format: {str(e)}', category='error')
 
@@ -140,6 +141,8 @@ def create_event():
 
     is_custom_year_leap = is_leap_year(custom_year)
 
+    next_url = request.args.get('next') or url_for('views.calendar')
+
     return render_template(
         "create_event.html",
         event=None,
@@ -148,7 +151,8 @@ def create_event():
         custom_day=custom_day,
         is_leap_year=is_custom_year_leap,
         category_select_value='',
-        custom_category_value=''
+        custom_category_value='',
+        next_url=next_url
     )
 
 @views.route('/event/<int:event_id>', methods=['GET', 'POST'])
@@ -186,7 +190,8 @@ def edit_event(event_id):
                 event.end_time = convert_custom_to_standard_date(year, month, day, 23, 59)
                 db.session.commit()
                 flash('Event updated!', category='success')
-                return redirect(url_for('views.calendar'))
+                next_url = request.form.get('next') or url_for('views.calendar')
+                return redirect(next_url)
             except ValueError as e:
                 flash(f'Invalid date format: {str(e)}', category='error')
 
@@ -203,6 +208,8 @@ def edit_event(event_id):
         category_select_value = event_category
         custom_category_value = ''
 
+    next_url = request.args.get('next') or url_for('views.calendar')
+
     return render_template(
         "create_event.html",
         event=event,
@@ -211,7 +218,8 @@ def edit_event(event_id):
         custom_day=custom_date['day'],
         is_leap_year=is_custom_year_leap,
         category_select_value=category_select_value,
-        custom_category_value=custom_category_value
+        custom_category_value=custom_category_value,
+        next_url=next_url
     )
 
 @views.route('/delete-event', methods=['POST'])

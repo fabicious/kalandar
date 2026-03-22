@@ -293,6 +293,21 @@ a:hover {
     vertical-align: middle;
     white-space: nowrap;
 }
+.category-badge[data-category="Die Helden"] {
+    background-color: rgba(160, 64, 64, 0.2);
+    border-color: rgba(180, 80, 80, 0.5);
+    color: #d48a8a;
+}
+.category-badge[data-category="Die Krieger"] {
+    background-color: rgba(70, 100, 160, 0.2);
+    border-color: rgba(90, 120, 180, 0.5);
+    color: #8aaad4;
+}
+.category-badge[data-category="Duos"] {
+    background-color: rgba(70, 140, 70, 0.2);
+    border-color: rgba(80, 150, 80, 0.5);
+    color: #8ac08a;
+}
 
 /* Selection */
 ::selection {

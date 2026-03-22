@@ -29,28 +29,10 @@ document.addEventListener('DOMContentLoaded', function() {
         return month < 4 ? 90 : (isLeapYear(year) ? 6 : 5);
     }
 
-    /**
-     * Returns true if the given event falls on the specified custom calendar day.
-     * Strategy 1: Direct custom date match (year-sensitive).
-     * Strategy 2: Gregorian month/day match via date mappings (year-independent fallback).
-     */
-    function eventMatchesDay(event, month, day, year, gregorianDateText) {
-        if (String(year) === String(event.customStart.year) &&
+    function eventMatchesDay(event, month, day, year) {
+        return String(year) === String(event.customStart.year) &&
             String(month) === String(event.customStart.month) &&
-            String(day) === String(event.customStart.day)) {
-            return true;
-        }
-
-        const eventDate = event.start.substring(0, 10); // YYYY-MM-DD
-        if (gregorianDateText && eventDate) {
-            const gregMonthDay = gregorianDateText.substring(0, 5); // "MM/DD"
-            const eventMonthDay = eventDate.substring(5, 10);       // "MM-DD"
-            if (gregMonthDay === eventMonthDay.replace('-', '/')) {
-                return true;
-            }
-        }
-
-        return false;
+            String(day) === String(event.customStart.day);
     }
 
     function fetchEvents() {
@@ -139,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dayCell.appendChild(gregorianDate);
 
             const matchingEvents = events.filter(e =>
-                eventMatchesDay(e, month, day, currentYear, gregorianDateText)
+                eventMatchesDay(e, month, day, currentYear)
             );
 
             if (matchingEvents.length > 0) {
@@ -193,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showDayEvents(month, day, year) {
         const addEventBtn = document.getElementById('add-event-btn');
         if (addEventBtn) {
-            addEventBtn.href = `/event?year=${year}&month=${month}&day=${day}`;
+            addEventBtn.href = `/event?year=${year}&month=${month}&day=${day}&next=/calendar`;
         }
 
         const loadingIndicator = document.getElementById('day-events-loading');
@@ -216,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (window.dateMappings[month] && window.dateMappings[month][day]) {
                         gregorianDateText = window.dateMappings[month][day];
                     }
-                    return eventMatchesDay(event, month, day, year, gregorianDateText);
+                    return eventMatchesDay(event, month, day, year);
                 });
 
                 document.getElementById('dayEventsTitle').textContent =
@@ -249,6 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (event.category) {
                             const badge = document.createElement('span');
                             badge.className = 'category-badge';
+                            badge.dataset.category = event.category;
                             badge.textContent = event.category;
                             titleRow.appendChild(badge);
                         }
@@ -261,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         actions.className = 'd-flex gap-2 mt-1';
 
                         const editBtn = document.createElement('a');
-                        editBtn.href = `/event/${event.id}`;
+                        editBtn.href = `/event/${event.id}?next=/calendar`;
                         editBtn.className = 'btn btn-sm btn-outline-primary';
                         editBtn.textContent = 'Edit';
 
