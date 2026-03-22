@@ -260,14 +260,21 @@ def get_events():
 def event_list():
     events = Event.query.order_by(Event.start_time).all()
 
-    # Group events by custom calendar year
-    events_by_year = {}
+    # Group events by custom calendar year and month
+    # Structure: { year: { month_index: { 'month_name': str, 'events': [...] } } }
+    grouped = {}
     for event in events:
         custom_date = convert_standard_to_custom_date(event.start_time)
         year = custom_date['year']
-        if year not in events_by_year:
-            events_by_year[year] = []
-        events_by_year[year].append({
+        month = custom_date['month']
+        if year not in grouped:
+            grouped[year] = {}
+        if month not in grouped[year]:
+            grouped[year][month] = {
+                'month_name': custom_date['month_name'],
+                'events': []
+            }
+        grouped[year][month]['events'].append({
             'id': event.id,
             'title': event.title,
             'description': event.description or '',
@@ -276,11 +283,13 @@ def event_list():
             'month_name': custom_date['month_name'],
         })
 
-    # Sort years descending (most recent first)
-    sorted_years = sorted(events_by_year.keys(), reverse=True)
+    # Sort years descending, months ascending within each year
+    sorted_years = sorted(grouped.keys(), reverse=True)
+    for year in sorted_years:
+        grouped[year] = dict(sorted(grouped[year].items()))
 
     return render_template("events.html",
-                           events_by_year=events_by_year,
+                           grouped=grouped,
                            sorted_years=sorted_years)
 
 @views.route('/get-date-mappings/<int:year>')

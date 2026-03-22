@@ -46,23 +46,35 @@ def standard_to_days_since_epoch(year, month, day):
     epoch = datetime(STANDARD_EPOCH_YEAR, STANDARD_EPOCH_MONTH, STANDARD_EPOCH_DAY)
     return (date - epoch).days
 
+def _day_of_year(year, month, day):
+    """1-based day-of-year for a custom calendar date."""
+    doy = day
+    for m in range(month):
+        doy += get_days_in_month(m, year)
+    return doy
+
 def custom_to_days_since_epoch(year, month, day):
-    """Convert a custom calendar date to days since the custom epoch (11 Astira 1520)"""
-    # Calculate days between years
-    days = 0
-    
-    # Add days for complete years before the target year
-    for y in range(CUSTOM_EPOCH_YEAR, year):
-        days += get_total_days_in_year(y)
-    
-    # Add days within the target year up to the target month
-    for m in range(CUSTOM_EPOCH_MONTH, month):
-        days += get_days_in_month(m, year)
-    
-    # Add days within the target month up to the target day
-    days += day - CUSTOM_EPOCH_DAY
-    
-    return days
+    """Convert a custom calendar date to days since the custom epoch (11 Astira 1520).
+    Returns negative values for dates before the epoch."""
+    target_doy = _day_of_year(year, month, day)
+    epoch_doy = _day_of_year(CUSTOM_EPOCH_YEAR, CUSTOM_EPOCH_MONTH, CUSTOM_EPOCH_DAY)
+
+    if year == CUSTOM_EPOCH_YEAR:
+        return target_doy - epoch_doy
+    elif year > CUSTOM_EPOCH_YEAR:
+        # Days remaining in epoch year + full intermediate years + target doy
+        days = get_total_days_in_year(CUSTOM_EPOCH_YEAR) - epoch_doy
+        for y in range(CUSTOM_EPOCH_YEAR + 1, year):
+            days += get_total_days_in_year(y)
+        days += target_doy
+        return days
+    else:
+        # year < epoch: go backward
+        days = epoch_doy
+        for y in range(year + 1, CUSTOM_EPOCH_YEAR):
+            days += get_total_days_in_year(y)
+        days += get_total_days_in_year(year) - target_doy
+        return -days
 
 def custom_to_standard_date(custom_year, custom_month, custom_day):
     """Convert a custom calendar date to a standard Gregorian date"""
@@ -81,58 +93,41 @@ def format_standard_date(date):
 
 def standard_to_custom_date(standard_date):
     """Convert a standard Gregorian date to our custom calendar date"""
-    # Calculate days since standard epoch
     days_since_standard_epoch = standard_to_days_since_epoch(
         standard_date.year, standard_date.month, standard_date.day)
-    
-    # Start from the custom epoch
-    custom_year = CUSTOM_EPOCH_YEAR
-    custom_month = CUSTOM_EPOCH_MONTH
-    custom_day = CUSTOM_EPOCH_DAY
-    
-    # Add the days to the custom date
-    remaining_days = days_since_standard_epoch
-    
-    # Advance years
-    while True:
-        days_in_year = get_total_days_in_year(custom_year)
-        if remaining_days >= days_in_year:
-            remaining_days -= days_in_year
-            custom_year += 1
-        else:
+
+    # Start at epoch: Astira 11, 1520.  Compute doy then shift by offset.
+    year = CUSTOM_EPOCH_YEAR
+    epoch_doy = _day_of_year(CUSTOM_EPOCH_YEAR, CUSTOM_EPOCH_MONTH, CUSTOM_EPOCH_DAY)
+    doy = epoch_doy + days_since_standard_epoch
+
+    # Normalize year forward
+    while doy > get_total_days_in_year(year):
+        doy -= get_total_days_in_year(year)
+        year += 1
+
+    # Normalize year backward
+    while doy < 1:
+        year -= 1
+        doy += get_total_days_in_year(year)
+
+    # Decompose doy into month/day
+    month = 0
+    for m in range(5):
+        dim = get_days_in_month(m, year)
+        if doy <= dim:
+            month = m
             break
-    
-    # Advance months
-    while True:
-        days_in_month = get_days_in_month(custom_month, custom_year)
-        if remaining_days >= days_in_month:
-            remaining_days -= days_in_month
-            custom_month += 1
-            if custom_month >= 5:  # Wrap to next year
-                custom_month = 0
-                custom_year += 1
-        else:
-            break
-    
-    # Advance days
-    custom_day += remaining_days
-    
-    # Check if we need to advance to next month
-    days_in_current_month = get_days_in_month(custom_month, custom_year)
-    if custom_day > days_in_current_month:
-        custom_day -= days_in_current_month
-        custom_month += 1
-        if custom_month >= 5:  # Wrap to next year
-            custom_month = 0
-            custom_year += 1
-    
+        doy -= dim
+    day = doy
+
     return {
-        'year': custom_year,
-        'month': custom_month,
-        'month_name': get_month_name(custom_month),
-        'day': custom_day,
-        'weekday': get_day_of_week(custom_day_of_year(custom_year, custom_month, custom_day)),
-        'weekday_name': get_weekday_name(get_day_of_week(custom_day_of_year(custom_year, custom_month, custom_day)))
+        'year': year,
+        'month': month,
+        'month_name': get_month_name(month),
+        'day': day,
+        'weekday': get_day_of_week(custom_day_of_year(year, month, day)),
+        'weekday_name': get_weekday_name(get_day_of_week(custom_day_of_year(year, month, day)))
     }
 
 def custom_day_of_year(year, month, day):

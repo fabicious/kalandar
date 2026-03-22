@@ -12,26 +12,31 @@
         {% if sorted_years %}
             {% for year in sorted_years %}
             <div class="mb-4">
-                <h4 class="mb-3" style="border-bottom: 1px solid var(--border-gold); padding-bottom: 0.5rem;">{{ year }}</h4>
-                <ul class="list-group">
-                    {% for event in events_by_year[year] %}
-                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                        <div>
-                            <strong>{{ event.day }}. {{ event.month_name }}</strong> &mdash; {{ event.title }}
-                            {% if event.category %}
-                            <span class="category-badge">{{ event.category }}</span>
-                            {% endif %}
-                            {% if event.description %}
-                            <br><small class="text-muted">{{ event.description }}</small>
-                            {% endif %}
-                        </div>
-                        <div class="d-flex gap-1 ms-2 flex-shrink-0">
-                            <a href="/event/{{ event.id }}" class="btn btn-sm btn-outline-primary" title="Edit event">&#x270E;</a>
-                            <button class="btn btn-sm btn-outline-danger delete-event" data-event-id="{{ event.id }}" title="Delete event">&#x2715;</button>
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
+                <h3 class="mb-3" style="border-bottom: 1px solid var(--border-gold); padding-bottom: 0.5rem;">{{ year }}</h3>
+                {% for month_idx, month_data in grouped[year].items() %}
+                <div class="mb-3">
+                    <h5 class="ms-1 mb-2">{{ month_data.month_name }}</h5>
+                    <ul class="list-group">
+                        {% for event in month_data.events %}
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>Day {{ event.day }}</strong> &mdash; {{ event.title }}
+                                {% if event.category %}
+                                <span class="category-badge">{{ event.category }}</span>
+                                {% endif %}
+                                {% if event.description %}
+                                <br><small class="text-muted">{{ event.description }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex gap-1 ms-2 flex-shrink-0">
+                                <a href="/event/{{ event.id }}" class="btn btn-sm btn-outline-primary" title="Edit event">&#x270E;</a>
+                                <button class="btn btn-sm btn-outline-danger delete-event" data-event-id="{{ event.id }}" title="Delete event">&#x2715;</button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
             </div>
             {% endfor %}
         {% else %}
