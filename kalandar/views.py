@@ -85,6 +85,11 @@ def create_event():
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
+        category_select = request.form.get('category', '').strip()
+        if category_select == '__custom__':
+            category = request.form.get('custom_category', '').strip() or None
+        else:
+            category = category_select or None
 
         year = int(request.form.get('year', datetime.now().year))
         month = int(request.form.get('month', 0))
@@ -106,6 +111,7 @@ def create_event():
                 new_event = Event(
                     title=title,
                     description=description,
+                    category=category,
                     start_time=start_time,
                     end_time=end_time,
                     all_day=True
@@ -136,10 +142,76 @@ def create_event():
 
     return render_template(
         "create_event.html",
+        event=None,
         custom_year=custom_year,
         custom_month=custom_month,
         custom_day=custom_day,
-        is_leap_year=is_custom_year_leap
+        is_leap_year=is_custom_year_leap,
+        category_select_value='',
+        custom_category_value=''
+    )
+
+@views.route('/event/<int:event_id>', methods=['GET', 'POST'])
+@login_required
+def edit_event(event_id):
+    event = Event.query.get_or_404(event_id)
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        category_select = request.form.get('category', '').strip()
+        if category_select == '__custom__':
+            category = request.form.get('custom_category', '').strip() or None
+        else:
+            category = category_select or None
+
+        year = int(request.form.get('year', datetime.now().year))
+        month = int(request.form.get('month', 0))
+        day = int(request.form.get('day', 1))
+
+        if not title:
+            flash('Event must have a title', category='error')
+        elif year <= 0:
+            flash('Invalid year', category='error')
+        elif not (0 <= month <= 4):
+            flash('Invalid month', category='error')
+        elif not (1 <= day <= get_days_in_month(month, year)):
+            flash('Invalid day for the selected month', category='error')
+        else:
+            try:
+                event.title = title
+                event.description = description
+                event.category = category
+                event.start_time = convert_custom_to_standard_date(year, month, day)
+                event.end_time = convert_custom_to_standard_date(year, month, day, 23, 59)
+                db.session.commit()
+                flash('Event updated!', category='success')
+                return redirect(url_for('views.calendar'))
+            except ValueError as e:
+                flash(f'Invalid date format: {str(e)}', category='error')
+
+    custom_date = convert_standard_to_custom_date(event.start_time)
+    is_custom_year_leap = is_leap_year(custom_date['year'])
+
+    # Determine if category is a preset or custom
+    preset_categories = ['Die Helden', 'Die Krieger', 'Nerolandes', 'Duos']
+    event_category = event.category or ''
+    if event_category and event_category not in preset_categories:
+        category_select_value = '__custom__'
+        custom_category_value = event_category
+    else:
+        category_select_value = event_category
+        custom_category_value = ''
+
+    return render_template(
+        "create_event.html",
+        event=event,
+        custom_year=custom_date['year'],
+        custom_month=custom_date['month'],
+        custom_day=custom_date['day'],
+        is_leap_year=is_custom_year_leap,
+        category_select_value=category_select_value,
+        custom_category_value=custom_category_value
     )
 
 @views.route('/delete-event', methods=['POST'])
@@ -174,6 +246,7 @@ def get_events():
             'id': event.id,
             'title': event.title,
             'description': event.description if event.description else '',
+            'category': event.category or '',
             'start': event.start_time.strftime('%Y-%m-%dT%H:%M'),
             'end': event.end_time.strftime('%Y-%m-%dT%H:%M'),
             'customStart': custom_start,
@@ -198,6 +271,7 @@ def event_list():
             'id': event.id,
             'title': event.title,
             'description': event.description or '',
+            'category': event.category or '',
             'day': custom_date['day'],
             'month_name': custom_date['month_name'],
         })

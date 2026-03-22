@@ -279,6 +279,21 @@ a:hover {
     background: var(--text-muted);
 }
 
+/* Category badges */
+.category-badge {
+    display: inline-block;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background-color: rgba(201, 162, 39, 0.15);
+    border: 1px solid var(--border-gold);
+    color: var(--gold-bright);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
 /* Selection */
 ::selection {
     background-color: rgba(201, 162, 39, 0.3);

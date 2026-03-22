@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const todayDay = window.CALENDAR_CONFIG.todayDay;
 
     let currentYear = todayYear;
+    let currentMonth = todayMonth;
     let events = [];
 
     fetchEvents();
@@ -64,135 +65,129 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    function updateNavDisplay() {
+        document.getElementById('current-year').textContent = currentYear;
+        document.getElementById('current-month-name').textContent = monthNames[currentMonth];
+
+        // Update month tab active states
+        document.querySelectorAll('.month-tab').forEach(tab => {
+            tab.classList.toggle('active', parseInt(tab.dataset.month) === currentMonth);
+        });
+    }
+
     function renderCalendar() {
         const calendarEl = document.getElementById('custom-calendar');
         calendarEl.innerHTML = '';
 
-        document.getElementById('current-year').textContent = currentYear;
+        updateNavDisplay();
 
         fetch(`/get-date-mappings/${currentYear}`)
             .then(response => response.json())
             .then(newMappings => {
                 window.dateMappings = newMappings;
-                renderMonths();
+                renderMonth(currentMonth);
             })
             .catch(error => {
                 console.error('Error fetching date mappings:', error);
-                renderMonths();
+                renderMonth(currentMonth);
             });
     }
 
-    function renderMonths() {
+    function renderMonth(month) {
         const calendarEl = document.getElementById('custom-calendar');
         calendarEl.innerHTML = '';
 
-        for (let month = 0; month < 5; month++) {
-            const monthContainer = document.createElement('div');
-            monthContainer.className = 'month-container';
+        const daysGrid = document.createElement('div');
+        daysGrid.className = 'days-grid';
 
-            const monthHeader = document.createElement('div');
-            monthHeader.className = 'month-header';
-            monthHeader.textContent = monthNames[month];
-            monthContainer.appendChild(monthHeader);
-
-            const daysGrid = document.createElement('div');
-            daysGrid.className = 'days-grid';
-
-            for (let i = 0; i < 10; i++) {
-                const dayHeader = document.createElement('div');
-                dayHeader.className = 'day-header';
-                dayHeader.textContent = weekdayNames[i];
-                daysGrid.appendChild(dayHeader);
-            }
-
-            const daysInMonth = getDaysInMonth(month, currentYear);
-            const weeksInMonth = Math.ceil(daysInMonth / 10);
-
-            for (let week = 0; week < weeksInMonth; week++) {
-                const weekLabel = document.createElement('div');
-                weekLabel.className = 'week-label';
-                weekLabel.textContent = `Week ${week + 1}`;
-                daysGrid.appendChild(weekLabel);
-
-                const startDay = week * 10 + 1;
-                const endDay = Math.min(startDay + 9, daysInMonth);
-
-                for (let day = startDay; day <= endDay; day++) {
-                    const dayCell = document.createElement('div');
-                    dayCell.className = 'day-cell';
-
-                    if (currentYear === todayYear && month === todayMonth && day === todayDay) {
-                        dayCell.classList.add('today');
-                    }
-
-                    const dayNumber = document.createElement('div');
-                    dayNumber.className = 'day-number';
-                    dayNumber.textContent = day;
-                    dayCell.appendChild(dayNumber);
-
-                    const gregorianDate = document.createElement('div');
-                    gregorianDate.className = 'gregorian-date';
-
-                    if (!window.dateMappings) {
-                        window.dateMappings = window.CALENDAR_CONFIG.initialDateMappings;
-                    }
-
-                    let gregorianDateText = '';
-                    if (window.dateMappings[month] && window.dateMappings[month][day]) {
-                        gregorianDateText = window.dateMappings[month][day];
-                        gregorianDate.textContent = gregorianDateText;
-                    }
-
-                    dayCell.appendChild(gregorianDate);
-
-                    const matchingEvents = events.filter(e =>
-                        eventMatchesDay(e, month, day, currentYear, gregorianDateText)
-                    );
-
-                    if (matchingEvents.length > 0) {
-                        dayCell.classList.add('has-event');
-
-                        const eventIndicators = document.createElement('div');
-                        eventIndicators.className = 'event-indicators';
-                        eventIndicators.style.textAlign = 'center';
-
-                        const dotsToShow = Math.min(matchingEvents.length, 3);
-                        for (let i = 0; i < dotsToShow; i++) {
-                            const dot = document.createElement('span');
-                            dot.className = 'event-indicator';
-                            eventIndicators.appendChild(dot);
-                        }
-
-                        dayCell.appendChild(eventIndicators);
-                    }
-
-                    dayCell.addEventListener('click', function() {
-                        showDayEvents(month, day, currentYear);
-                    });
-
-                    daysGrid.appendChild(dayCell);
-                }
-
-                if (endDay < daysInMonth && (endDay % 10) !== 0) {
-                    const emptyCellsNeeded = 10 - (endDay % 10);
-                    for (let i = 0; i < emptyCellsNeeded; i++) {
-                        const emptyCell = document.createElement('div');
-                        emptyCell.className = 'day-cell';
-                        emptyCell.style.visibility = 'hidden';
-                        daysGrid.appendChild(emptyCell);
-                    }
-                }
-
-                if (week < weeksInMonth - 1) {
-                    const weekSeparator = document.createElement('div');
-                    weekSeparator.className = 'week-separator';
-                    daysGrid.appendChild(weekSeparator);
-                }
-            }
-
-            monthContainer.appendChild(daysGrid);
-            calendarEl.appendChild(monthContainer);
+        // Weekday headers
+        for (let i = 0; i < 10; i++) {
+            const dayHeader = document.createElement('div');
+            dayHeader.className = 'day-header';
+            dayHeader.textContent = weekdayNames[i];
+            daysGrid.appendChild(dayHeader);
         }
+
+        const daysInMonth = getDaysInMonth(month, currentYear);
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayCell = document.createElement('div');
+            dayCell.className = 'day-cell';
+
+            if (currentYear === todayYear && month === todayMonth && day === todayDay) {
+                dayCell.classList.add('today');
+            }
+
+            const dayNumber = document.createElement('div');
+            dayNumber.className = 'day-number';
+            dayNumber.textContent = day;
+            dayCell.appendChild(dayNumber);
+
+            const gregorianDate = document.createElement('div');
+            gregorianDate.className = 'gregorian-date';
+
+            if (!window.dateMappings) {
+                window.dateMappings = window.CALENDAR_CONFIG.initialDateMappings;
+            }
+
+            let gregorianDateText = '';
+            if (window.dateMappings[month] && window.dateMappings[month][day]) {
+                gregorianDateText = window.dateMappings[month][day];
+                gregorianDate.textContent = gregorianDateText;
+            }
+
+            dayCell.appendChild(gregorianDate);
+
+            const matchingEvents = events.filter(e =>
+                eventMatchesDay(e, month, day, currentYear, gregorianDateText)
+            );
+
+            if (matchingEvents.length > 0) {
+                dayCell.classList.add('has-event');
+
+                const eventIndicators = document.createElement('div');
+                eventIndicators.className = 'event-indicators';
+                eventIndicators.style.textAlign = 'center';
+
+                const dotsToShow = Math.min(matchingEvents.length, 3);
+                for (let i = 0; i < dotsToShow; i++) {
+                    const dot = document.createElement('span');
+                    dot.className = 'event-indicator';
+                    eventIndicators.appendChild(dot);
+                }
+
+                dayCell.appendChild(eventIndicators);
+            }
+
+            dayCell.addEventListener('click', function() {
+                showDayEvents(month, day, currentYear);
+            });
+
+            daysGrid.appendChild(dayCell);
+        }
+
+        // Fill empty cells for last row of Kus
+        if (daysInMonth < 10) {
+            for (let i = daysInMonth; i < 10; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'day-cell empty-cell';
+                daysGrid.appendChild(emptyCell);
+            }
+        }
+
+        calendarEl.appendChild(daysGrid);
+    }
+
+    function navigateMonth(delta) {
+        currentMonth += delta;
+        if (currentMonth > 4) {
+            currentMonth = 0;
+            currentYear++;
+        } else if (currentMonth < 0) {
+            currentMonth = 4;
+            currentYear--;
+        }
+        renderCalendar();
     }
 
     function showDayEvents(month, day, year) {
@@ -225,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 document.getElementById('dayEventsTitle').textContent =
-                    `Events on ${monthNames[month]} Day ${day}`;
+                    `Events on ${monthNames[month]} ${day}`;
 
                 Array.from(eventsList.children).forEach(child => {
                     if (!child.id || child.id !== 'day-events-loading') {
@@ -245,22 +240,44 @@ document.addEventListener('DOMContentLoaded', function() {
                         const li = document.createElement('li');
                         li.className = 'list-group-item';
 
+                        const titleRow = document.createElement('div');
+                        titleRow.className = 'd-flex align-items-center gap-2';
                         const title = document.createElement('h5');
+                        title.className = 'mb-0';
                         title.textContent = event.title;
+                        titleRow.appendChild(title);
+                        if (event.category) {
+                            const badge = document.createElement('span');
+                            badge.className = 'category-badge';
+                            badge.textContent = event.category;
+                            titleRow.appendChild(badge);
+                        }
 
                         const description = document.createElement('p');
+                        description.className = 'mt-1 mb-1';
                         description.textContent = event.description || 'No description';
 
+                        const actions = document.createElement('div');
+                        actions.className = 'd-flex gap-2 mt-1';
+
+                        const editBtn = document.createElement('a');
+                        editBtn.href = `/event/${event.id}`;
+                        editBtn.className = 'btn btn-sm btn-outline-primary';
+                        editBtn.textContent = 'Edit';
+
                         const deleteBtn = document.createElement('button');
-                        deleteBtn.className = 'btn btn-sm btn-danger mt-2';
+                        deleteBtn.className = 'btn btn-sm btn-danger';
                         deleteBtn.textContent = 'Delete';
                         deleteBtn.addEventListener('click', function() {
                             deleteEvent(event.id);
                         });
 
-                        li.appendChild(title);
+                        actions.appendChild(editBtn);
+                        actions.appendChild(deleteBtn);
+
+                        li.appendChild(titleRow);
                         li.appendChild(description);
-                        li.appendChild(deleteBtn);
+                        li.appendChild(actions);
                         ul.appendChild(li);
                     });
 
@@ -292,21 +309,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Month navigation
+    document.getElementById('prev-month').addEventListener('click', function() {
+        navigateMonth(-1);
+    });
+
+    document.getElementById('next-month').addEventListener('click', function() {
+        navigateMonth(1);
+    });
+
+    // Year navigation
     document.getElementById('prev-year').addEventListener('click', function() {
         currentYear--;
-        updateCalendarYear(currentYear);
+        renderCalendar();
     });
 
     document.getElementById('next-year').addEventListener('click', function() {
         currentYear++;
-        updateCalendarYear(currentYear);
+        renderCalendar();
     });
 
     document.getElementById('go-to-today').addEventListener('click', function() {
         currentYear = todayYear;
-        updateCalendarYear(currentYear);
+        currentMonth = todayMonth;
+        renderCalendar();
     });
 
+    // Click year to edit
     const yearDisplay = document.getElementById('current-year');
     const yearInput = document.getElementById('year-input');
 
@@ -323,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const newYear = parseInt(yearInput.value, 10);
             if (!isNaN(newYear)) {
                 currentYear = newYear;
-                updateCalendarYear(currentYear);
+                renderCalendar();
             }
             yearInput.classList.add('d-none');
             yearDisplay.classList.remove('d-none');
@@ -338,16 +367,23 @@ document.addEventListener('DOMContentLoaded', function() {
         yearDisplay.classList.remove('d-none');
     });
 
-    function updateCalendarYear(year) {
-        fetch(`/get-date-mappings/${year}`)
-            .then(response => response.json())
-            .then(newMappings => {
-                window.dateMappings = newMappings;
-                renderCalendar();
-            })
-            .catch(error => {
-                console.error('Error fetching date mappings:', error);
-                renderCalendar();
-            });
-    }
+    // Month tabs
+    document.querySelectorAll('.month-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            currentMonth = parseInt(this.dataset.month);
+            renderCalendar();
+        });
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (document.querySelector('.modal.show')) return;
+
+        if (e.key === 'ArrowLeft') {
+            navigateMonth(-1);
+        } else if (e.key === 'ArrowRight') {
+            navigateMonth(1);
+        }
+    });
 });

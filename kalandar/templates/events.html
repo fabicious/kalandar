@@ -18,11 +18,17 @@
                     <li class="list-group-item d-flex justify-content-between align-items-start">
                         <div>
                             <strong>{{ event.day }}. {{ event.month_name }}</strong> &mdash; {{ event.title }}
+                            {% if event.category %}
+                            <span class="category-badge">{{ event.category }}</span>
+                            {% endif %}
                             {% if event.description %}
                             <br><small class="text-muted">{{ event.description }}</small>
                             {% endif %}
                         </div>
-                        <button class="btn btn-sm btn-outline-danger ms-2 delete-event" data-event-id="{{ event.id }}" title="Delete event">&#x2715;</button>
+                        <div class="d-flex gap-1 ms-2 flex-shrink-0">
+                            <a href="/event/{{ event.id }}" class="btn btn-sm btn-outline-primary" title="Edit event">&#x270E;</a>
+                            <button class="btn btn-sm btn-outline-danger delete-event" data-event-id="{{ event.id }}" title="Delete event">&#x2715;</button>
+                        </div>
                     </li>
                     {% endfor %}
                 </ul>

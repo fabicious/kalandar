@@ -1,26 +1,38 @@
 {% extends "base.html" %}
-{% block title %}Add Event{% endblock %}
+{% block title %}{{ 'Edit Event' if event else 'Add Event' }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <h4 class="mb-0">Add New Event</h4>
+                <h4 class="mb-0">{{ 'Edit Event' if event else 'Add New Event' }}</h4>
             </div>
             <div class="card-body">
                 <form method="POST">
                     <div class="mb-3">
                         <label for="title" class="form-label">Event Title</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
+                        <input type="text" class="form-control" id="title" name="title" value="{{ event.title if event else '' }}" required>
                     </div>
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ event.description if event and event.description else '' }}</textarea>
                     </div>
-                    
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="" {% if not category_select_value %}selected{% endif %}>None</option>
+                            <option value="Die Helden" {% if category_select_value == 'Die Helden' %}selected{% endif %}>Die Helden</option>
+                            <option value="Die Krieger" {% if category_select_value == 'Die Krieger' %}selected{% endif %}>Die Krieger</option>
+                            <option value="Nerolandes" {% if category_select_value == 'Nerolandes' %}selected{% endif %}>Nerolandes</option>
+                            <option value="Duos" {% if category_select_value == 'Duos' %}selected{% endif %}>Duos</option>
+                            <option value="__custom__" {% if category_select_value == '__custom__' %}selected{% endif %}>Other...</option>
+                        </select>
+                        <input type="text" class="form-control mt-2 {% if category_select_value != '__custom__' %}d-none{% endif %}" id="custom_category" name="custom_category" placeholder="Enter category name" value="{{ custom_category_value }}">
+                    </div>
+
                     <h5 class="mt-4 mb-3">Calendar Date</h5>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="year" class="form-label">Year</label>
@@ -41,9 +53,9 @@
                             <input type="number" class="form-control" id="day" name="day" min="1" max="90" value="{{ custom_day }}" required>
                         </div>
                     </div>
-                    
+
                     <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary flex-grow-1">Add Event</button>
+                        <button type="submit" class="btn btn-primary flex-grow-1">{{ 'Save Changes' if event else 'Add Event' }}</button>
                         <a href="/calendar" class="btn btn-secondary">Cancel</a>
                     </div>
                 </form>
@@ -53,34 +65,42 @@
 </div>
 
 <script>
-    // Update max days based on selected month
     document.addEventListener('DOMContentLoaded', function() {
         const monthSelect = document.getElementById('month');
         const dayInput = document.getElementById('day');
         const yearInput = document.getElementById('year');
-        
+
         function updateDayLimit() {
             const month = parseInt(monthSelect.value);
             if (month < 4) {
                 dayInput.max = 90;
             } else {
-                // Month 5: check if leap year
                 const year = parseInt(yearInput.value);
                 const isLeapYear = ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
                 dayInput.max = isLeapYear ? 6 : 5;
             }
-            
-            // Adjust day value if it exceeds the max
+
             if (parseInt(dayInput.value) > parseInt(dayInput.max)) {
                 dayInput.value = dayInput.max;
             }
         }
-        
+
         monthSelect.addEventListener('change', updateDayLimit);
         yearInput.addEventListener('change', updateDayLimit);
-        
-        // Initialize
+
         updateDayLimit();
+
+        const categorySelect = document.getElementById('category');
+        const customCategory = document.getElementById('custom_category');
+        categorySelect.addEventListener('change', function() {
+            if (this.value === '__custom__') {
+                customCategory.classList.remove('d-none');
+                customCategory.focus();
+            } else {
+                customCategory.classList.add('d-none');
+                customCategory.value = '';
+            }
+        });
     });
 </script>
 {% endblock %}

@@ -41,3 +41,8 @@ def _migrate_database():
             conn.commit()
         except Exception:
             pass  # Column already exists
+        try:
+            conn.execute(text("ALTER TABLE event ADD COLUMN category VARCHAR(100)"))
+            conn.commit()
+        except Exception:
+            pass  # Column already exists

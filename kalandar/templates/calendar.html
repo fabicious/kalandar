@@ -16,24 +16,39 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <div class="date-info-box p-3 rounded mb-4">
+        <div class="date-info-box p-3 rounded mb-3">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <strong>Today:</strong> <span id="custom-date-info">{{ custom_today.weekday_name }}, {{ custom_today.month_name }} {{ custom_today.day }}, {{ custom_today.year }}</span>
                     <span class="text-muted ms-2">(<span id="standard-date-info"></span>)</span>
                 </div>
-                <a href="/event" class="btn btn-primary btn-sm">+ New Event</a>
+                <div class="d-flex gap-2 align-items-center">
+                    <button id="go-to-today" class="btn btn-secondary btn-sm">Today</button>
+                    <a href="/event" class="btn btn-primary btn-sm">+ New Event</a>
+                </div>
             </div>
         </div>
 
-        <div class="calendar-nav mb-4">
-            <div class="d-flex justify-content-center align-items-center gap-3">
+        <!-- Year navigation -->
+        <div class="calendar-nav mb-2">
+            <div class="d-flex justify-content-center align-items-center gap-2">
                 <button id="prev-year" class="btn btn-outline-primary btn-sm">&laquo;</button>
                 <span class="year-display" id="current-year">{{ custom_today.year }}</span>
                 <input type="number" id="year-input" class="form-control d-none" style="width: 100px;">
                 <button id="next-year" class="btn btn-outline-primary btn-sm">&raquo;</button>
-                <button id="go-to-today" class="btn btn-secondary btn-sm">Today</button>
             </div>
+        </div>
+
+        <!-- Month tabs -->
+        <div class="month-tabs mb-3">
+            <button id="prev-month" class="month-nav-btn">&lsaquo;</button>
+            <button class="month-tab active" data-month="0">Astira</button>
+            <button class="month-tab" data-month="1">Grin</button>
+            <button class="month-tab" data-month="2">Train</button>
+            <button class="month-tab" data-month="3">Windugi</button>
+            <button class="month-tab" data-month="4">Kus</button>
+            <button id="next-month" class="month-nav-btn">&rsaquo;</button>
+            <span id="current-month-name" class="d-none"></span>
         </div>
 
         <div id="custom-calendar"></div>
