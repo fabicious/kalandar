@@ -1,27 +1,286 @@
-/* Global Styles */
+/* ========================================
+   High Fantasy Theme — Dark with Gold Accents
+   ======================================== */
+
+:root {
+    --bg-deep: #12111a;
+    --bg-surface: #232136;
+    --bg-surface-light: #2a2745;
+    --gold: #c9a227;
+    --gold-bright: #d4af37;
+    --gold-dim: #a68520;
+    --text-cream: #e8d5b7;
+    --text-light: #f0e6d3;
+    --text-muted: #9890b0;
+    --danger: #a04040;
+    --danger-hover: #c05050;
+    --border-gold: rgba(201, 162, 39, 0.3);
+    --border-subtle: rgba(152, 144, 176, 0.15);
+    --glow-gold: rgba(201, 162, 39, 0.15);
+}
+
+/* Global */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
+    font-family: 'Crimson Text', Georgia, serif;
+    background-color: var(--bg-deep);
+    color: var(--text-cream);
+    font-size: 1.05rem;
 }
 
+h1, h2, h3, h4, h5, h6,
+.navbar-brand {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-bright);
+}
+
+a {
+    color: var(--gold);
+}
+a:hover {
+    color: var(--gold-bright);
+}
+
+/* Navbar */
 .navbar {
-    margin-bottom: 2rem;
+    margin-bottom: 0;
+    background: linear-gradient(180deg, #1a1832 0%, #12111a 100%) !important;
+    border-bottom: 1px solid var(--border-gold);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    padding: 0.75rem 0;
 }
 
-/* Form Styles */
-.form-control:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+.navbar-brand {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--gold-bright) !important;
+    letter-spacing: 0.05em;
 }
 
-/* Card Styles */
+.navbar-dark .navbar-nav .nav-link {
+    font-family: 'Cinzel', serif;
+    color: var(--text-cream);
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    transition: color 0.2s;
+}
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link:focus {
+    color: var(--gold-bright);
+}
+
+/* Container spacing */
+.container.my-4 {
+    margin-top: 2rem !important;
+}
+
+/* Cards */
 .card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-gold);
     border-radius: 0.5rem;
-    border: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    color: var(--text-cream);
 }
 
 .card-header {
+    background: linear-gradient(135deg, var(--bg-surface-light), var(--bg-surface)) !important;
+    border-bottom: 1px solid var(--border-gold);
     border-top-left-radius: 0.5rem !important;
     border-top-right-radius: 0.5rem !important;
+    color: var(--gold-bright) !important;
+}
+
+.card-header h4 {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-bright);
+}
+
+.card-title {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-bright);
+}
+
+/* Forms */
+.form-control,
+.form-select {
+    background-color: var(--bg-surface-light);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-cream);
+    font-family: 'Crimson Text', serif;
+}
+.form-control:focus,
+.form-select:focus {
+    background-color: #2f2b4a;
+    border-color: var(--gold);
+    color: var(--text-light);
+    box-shadow: 0 0 0 0.25rem var(--glow-gold);
+}
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+.form-label {
+    color: var(--text-cream);
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+}
+
+/* Buttons — Gold primary */
+.btn-primary {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+    border: 1px solid var(--gold);
+    color: #12111a;
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    border-color: var(--gold-bright);
+    color: #12111a;
+    box-shadow: 0 0 12px var(--glow-gold);
+}
+
+.btn-outline-primary {
+    color: var(--gold);
+    border-color: var(--gold);
+    font-family: 'Cinzel', serif;
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+    background-color: var(--gold);
+    border-color: var(--gold);
+    color: #12111a;
+    box-shadow: 0 0 12px var(--glow-gold);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+    border: 1px solid var(--gold);
+    color: #12111a;
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+}
+.btn-info:hover {
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    border-color: var(--gold-bright);
+    color: #12111a;
+}
+
+.btn-secondary {
+    background-color: var(--bg-surface-light);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-cream);
+    font-family: 'Cinzel', serif;
+}
+.btn-secondary:hover {
+    background-color: #3a3660;
+    border-color: var(--text-muted);
+    color: var(--text-light);
+}
+
+.btn-danger {
+    background-color: var(--danger);
+    border-color: var(--danger);
+    color: var(--text-light);
+    font-family: 'Cinzel', serif;
+}
+.btn-danger:hover {
+    background-color: var(--danger-hover);
+    border-color: var(--danger-hover);
+}
+
+.btn-outline-danger {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+.btn-outline-danger:hover {
+    background-color: var(--danger);
+    color: var(--text-light);
+}
+
+/* Alerts */
+.alert-danger {
+    background-color: rgba(160, 64, 64, 0.2);
+    border-color: var(--danger);
+    color: #e8a0a0;
+}
+.alert-success {
+    background-color: rgba(60, 120, 60, 0.2);
+    border-color: #4a8a4a;
+    color: #a0d8a0;
+}
+.alert .btn-close {
+    filter: invert(0.8);
+}
+
+/* Modals */
+.modal-content {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-gold);
+    color: var(--text-cream);
+}
+.modal-header {
+    border-bottom: 1px solid var(--border-gold);
+}
+.modal-header .modal-title {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-bright);
+}
+.modal-header .btn-close {
+    filter: invert(0.7);
+}
+.modal-footer {
+    border-top: 1px solid var(--border-gold);
+}
+.modal-backdrop.show {
+    opacity: 0.7;
+}
+
+/* List groups */
+.list-group-item {
+    background-color: var(--bg-surface);
+    border-color: var(--border-subtle);
+    color: var(--text-cream);
+}
+.list-group-item:hover {
+    background-color: var(--bg-surface-light);
+}
+
+/* Text helpers */
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Spinner override */
+.spinner-border.text-primary {
+    color: var(--gold) !important;
+}
+
+/* Background helpers override */
+.bg-light {
+    background-color: var(--bg-surface) !important;
+    border: 1px solid var(--border-subtle);
+}
+
+/* Scrollbar (webkit) */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-deep);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--bg-surface-light);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Selection */
+::selection {
+    background-color: rgba(201, 162, 39, 0.3);
+    color: var(--text-light);
 }
