@@ -208,7 +208,7 @@ def edit_event(event_id):
         category_select_value = event_category
         custom_category_value = ''
 
-    next_url = request.args.get('next') or url_for('views.calendar')
+    next_url = request.form.get('next') or request.args.get('next') or url_for('views.calendar')
 
     return render_template(
         "create_event.html",

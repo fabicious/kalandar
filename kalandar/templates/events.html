@@ -6,7 +6,7 @@
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Events</h2>
-            <a href="/event" class="btn btn-primary">+ New Event</a>
+            <a href="/event?next=/events" class="btn btn-primary">+ New Event</a>
         </div>
 
         {% if sorted_years %}
@@ -42,7 +42,7 @@
         {% else %}
             <div class="text-center py-5">
                 <p class="text-muted mb-3" style="font-size: 1.1rem;">No events have been recorded yet.</p>
-                <a href="/event" class="btn btn-outline-primary">Create your first event</a>
+                <a href="/event?next=/events" class="btn btn-outline-primary">Create your first event</a>
             </div>
         {% endif %}
     </div>
